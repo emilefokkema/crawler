@@ -13,7 +13,7 @@ namespace Crawler
             
         }
 
-        public async Task Get(string url)
+        public async Task<Result> Get(string url)
         {
             Console.WriteLine($"Going to get {url}");
             var request = new HttpRequestMessage();
@@ -22,25 +22,24 @@ namespace Crawler
             try
             {
                 var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-                await HandleResponse(response);
+                return await HandleResponse(response);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
+                return new ErrorResult(e);
             }
         }
 
-        private async Task HandleResponse(HttpResponseMessage response)
+        private async Task<Result> HandleResponse(HttpResponseMessage response)
         {
             if (!response.IsSuccessStatusCode)
             {
-                return;
+                return new ErrorResult($"status code was ${response.StatusCode}");
             }
 
             var content = response.Content;
             var contentAsString = await content.ReadAsStringAsync();
-            Console.WriteLine(contentAsString);
+            return new SuccessResult(contentAsString);
         }
     }
 }

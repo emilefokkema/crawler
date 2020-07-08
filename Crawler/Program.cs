@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Autofac;
 
@@ -10,13 +9,14 @@ namespace Crawler
         static async Task Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterType<HttpClient>();
-            builder.RegisterType<Client>().As<IClient>();
-            
+            builder.RegisterModule<CrawlerModule>();
             var container = builder.Build();
-            var client = container.Resolve<IClient>();
-            await client.Get("http://www.example.com");
-            Console.WriteLine("Hello World!");
+
+            var crawlerOperator = container.Resolve<ManualCrawlerOperator>();
+            var urlQueue = container.Resolve<IUrlQueue>();
+            //urlQueue.Add("https://www.iana.org/domains/example");
+            urlQueue.Add("http://www.example.com");
+            await crawlerOperator.Start();
         }
     }
 }

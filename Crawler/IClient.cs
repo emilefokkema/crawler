@@ -4,6 +4,6 @@ namespace Crawler
 {
     public interface IClient
     {
-        Task Get(string url);
+        Task<Result> Get(string url);
     }
 }
