@@ -19,6 +19,7 @@ namespace Crawler
             builder.RegisterType<Crawler>().As<ICrawler>().SingleInstance();
             builder.RegisterType<UrlFinderConsumer>().As<IResultConsumer>();
             builder.RegisterType<ErrorConsumer>().As<IResultConsumer>();
+            builder.RegisterType<ColoredLineWriter>().As<IColoredLineWriter>();
             builder.RegisterType<ManualCrawlerOperator>();
         }
     }

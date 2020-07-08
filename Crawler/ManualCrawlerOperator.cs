@@ -9,10 +9,6 @@ namespace Crawler
         public ManualCrawlerOperator(ICrawler crawler)
         {
             _crawler = crawler;
-            _crawler.ProcessedUrl += (sender, e) =>
-            {
-                Console.WriteLine($"processed {e.Url}");
-            };
         }
 
         public async Task Start()

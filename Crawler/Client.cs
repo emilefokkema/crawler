@@ -7,15 +7,16 @@ namespace Crawler
     public class Client: IClient
     {
         private readonly HttpClient _httpClient;
-        public Client(HttpClient httpClient)
+        private readonly IColoredLineWriter _coloredLineWriter;
+        public Client(HttpClient httpClient, IColoredLineWriter coloredLineWriter)
         {
             _httpClient = httpClient;
-            
+            _coloredLineWriter = coloredLineWriter;
         }
 
         public async Task<Result> Get(string url)
         {
-            Console.WriteLine($"Going to get {url}");
+            _coloredLineWriter.WriteLine($"Going to get {url}", ConsoleColor.Yellow);
             var request = new HttpRequestMessage();
             request.RequestUri = new Uri(url);
             request.Method = HttpMethod.Get;
