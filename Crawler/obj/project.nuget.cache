@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "UBX2bpN1eZJp+qvyeQcPNwE1HLs8x/yfPRzFZ+fl1E3oxs8joaqtcQ/TobVjDna953fth/ACcEl42v+VB3006w==",
+  "success": true,
+  "projectFilePath": "C:\\repos\\Crawler\\Crawler\\Crawler.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\e.fokkema\\.nuget\\packages\\autofac\\5.2.0\\autofac.5.2.0.nupkg.sha512"
+  ],
+  "logs": []
+}
