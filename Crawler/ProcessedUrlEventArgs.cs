@@ -4,9 +4,9 @@ namespace Crawler
 {
     public class ProcessedUrlEventArgs: EventArgs
     {
-        public string Url { get; }
+        public Uri Url { get; }
 
-        public ProcessedUrlEventArgs(string url)
+        public ProcessedUrlEventArgs(Uri url)
         {
             Url = url;
         }

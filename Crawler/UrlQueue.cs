@@ -1,23 +1,29 @@
 ﻿using System.Collections.Concurrent;
+using System.Linq;
+using System;
 
 namespace Crawler
 {
     public class UrlQueue: IUrlQueue
     {
-        private readonly ConcurrentQueue<string> _urls;
+        private readonly ConcurrentQueue<Uri> _urls;
 
         public UrlQueue()
         {
-            _urls = new ConcurrentQueue<string>();
+            _urls = new ConcurrentQueue<Uri>();
         }
 
-        public bool TryRead(out string url)
+        public bool TryRead(out Uri url)
         {
             return _urls.TryDequeue(out url);
         }
 
-        public void Add(string url)
+        public void Add(Uri url)
         {
+            if (_urls.Contains(url))
+            {
+                return;
+            }
             _urls.Enqueue(url);
         }
     }

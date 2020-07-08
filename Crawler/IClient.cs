@@ -1,9 +1,10 @@
 ﻿using System.Threading.Tasks;
+using System;
 
 namespace Crawler
 {
     public interface IClient
     {
-        Task<Result> Get(string url);
+        Task<Result> Get(Uri url);
     }
 }

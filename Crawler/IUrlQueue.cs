@@ -1,8 +1,10 @@
-﻿namespace Crawler
+﻿using System;
+
+namespace Crawler
 {
     public interface IUrlQueue
     {
-        bool TryRead(out string url);
-        void Add(string url);
+        bool TryRead(out Uri url);
+        void Add(Uri url);
     }
 }

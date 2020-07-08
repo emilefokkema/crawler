@@ -10,17 +10,17 @@ namespace Crawler
         public event EventHandler<ProcessedUrlEventArgs> ProcessedUrl;
         private readonly IClient _client;
         private readonly IUrlQueue _urlQueue;
-        private readonly IEnumerable<IResultConsumer> _consumers;
+        private readonly List<IResultConsumer> _consumers;
         public Crawler(IClient client, IUrlQueue urlQueue, IEnumerable<IResultConsumer> consumers)
         {
             _client = client;
-            _consumers = consumers;
+            _consumers = consumers.ToList();
             _urlQueue = urlQueue;
         }
 
         public bool ProcessUrl()
         {
-            if (!_urlQueue.TryRead(out string url))
+            if (!_urlQueue.TryRead(out Uri url))
             {
                 return false;
             }

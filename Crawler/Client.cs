@@ -14,16 +14,16 @@ namespace Crawler
             _coloredLineWriter = coloredLineWriter;
         }
 
-        public async Task<Result> Get(string url)
+        public async Task<Result> Get(Uri url)
         {
             _coloredLineWriter.WriteLine($"Going to get {url}", ConsoleColor.Yellow);
             var request = new HttpRequestMessage();
-            request.RequestUri = new Uri(url);
+            request.RequestUri = url;
             request.Method = HttpMethod.Get;
             try
             {
                 var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-                return await HandleResponse(response);
+                return await HandleResponse(url, response);
             }
             catch (Exception e)
             {
@@ -31,7 +31,7 @@ namespace Crawler
             }
         }
 
-        private async Task<Result> HandleResponse(HttpResponseMessage response)
+        private async Task<Result> HandleResponse(Uri url, HttpResponseMessage response)
         {
             if (!response.IsSuccessStatusCode)
             {
@@ -40,7 +40,7 @@ namespace Crawler
 
             var content = response.Content;
             var contentAsString = await content.ReadAsStringAsync();
-            return new SuccessResult(contentAsString);
+            return new SuccessResult(url, contentAsString);
         }
     }
 }
