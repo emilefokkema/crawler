@@ -4,7 +4,8 @@ namespace Crawler
 {
     public interface IUrlQueue
     {
-        bool TryRead(out Uri url);
+        bool TryDequeue(out Uri url);
+        bool TryPeek(out Uri url);
         void Add(Uri url);
     }
 }

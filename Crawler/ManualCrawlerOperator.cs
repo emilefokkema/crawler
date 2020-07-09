@@ -6,16 +6,27 @@ namespace Crawler
     public class ManualCrawlerOperator
     {
         private readonly ICrawler _crawler;
-        public ManualCrawlerOperator(ICrawler crawler)
+        private readonly IUrlQueue _urlQueue;
+        public ManualCrawlerOperator(ICrawler crawler, IUrlQueue urlQueue)
         {
             _crawler = crawler;
+            _urlQueue = urlQueue;
         }
 
         public async Task Start()
         {
             while (true)
             {
-                Console.WriteLine("Press p to process a url, or q to quit");
+                if (_urlQueue.TryPeek(out Uri nextInLine))
+                {
+                    Console.WriteLine($"Press p to process {nextInLine}, q to quit or s to skip");
+                }
+                else
+                {
+                    Console.WriteLine($"Press p to process a url, or q to quit");
+                }
+
+
                 ManualAction action = GetKnownAction();
                 if (action == ManualAction.Quit)
                 {
@@ -29,6 +40,9 @@ namespace Crawler
                     {
                         await WhenUrlIsProcessed();
                     }
+                }else if (action == ManualAction.Skip)
+                {
+                    _urlQueue.TryDequeue(out var _);
                 }
             }
         }
@@ -67,6 +81,7 @@ namespace Crawler
             {
                 case 'p': return ManualAction.Process;
                 case 'q': return ManualAction.Quit;
+                case 's': return ManualAction.Skip;
                 default: return ManualAction.Unknown;
             }
         }

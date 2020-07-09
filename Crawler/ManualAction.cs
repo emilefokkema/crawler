@@ -2,6 +2,6 @@
 {
     public enum ManualAction
     {
-        Unknown, Process, Quit
+        Unknown, Process, Quit, Skip
     }
 }

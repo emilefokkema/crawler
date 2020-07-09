@@ -10,23 +10,26 @@ namespace Crawler
         public event EventHandler<ProcessedUrlEventArgs> ProcessedUrl;
         private readonly IClient _client;
         private readonly IUrlQueue _urlQueue;
+        private readonly Web _web;
         private readonly List<IResultConsumer> _consumers;
-        public Crawler(IClient client, IUrlQueue urlQueue, IEnumerable<IResultConsumer> consumers)
+        public Crawler(IClient client, IUrlQueue urlQueue, Web web, IEnumerable<IResultConsumer> consumers)
         {
             _client = client;
             _consumers = consumers.ToList();
+            _web = web;
             _urlQueue = urlQueue;
         }
 
         public bool ProcessUrl()
         {
-            if (!_urlQueue.TryRead(out Uri url))
+            if (!_urlQueue.TryDequeue(out Uri url))
             {
                 return false;
             }
 
             Task.Run(async () =>
             {
+                await _web.AddDomainFor(url);
                 var result = await _client.Get(url);
                 foreach (var consumer in _consumers)
                 {

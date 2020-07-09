@@ -13,9 +13,14 @@ namespace Crawler
             _urls = new ConcurrentQueue<Uri>();
         }
 
-        public bool TryRead(out Uri url)
+        public bool TryDequeue(out Uri url)
         {
             return _urls.TryDequeue(out url);
+        }
+
+        public bool TryPeek(out Uri url)
+        {
+            return _urls.TryPeek(out url);
         }
 
         public void Add(Uri url)

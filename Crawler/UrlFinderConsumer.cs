@@ -9,13 +9,13 @@ namespace Crawler
     public class UrlFinderConsumer: IResultConsumer
     {
         private Regex _urlRegex;
-        private readonly List<ILinkConsumer> _linkConsumers;
+        private readonly Web _web;
         private readonly IColoredLineWriter _coloredLineWriter;
-        public UrlFinderConsumer(IEnumerable<ILinkConsumer> linkConsumers, IColoredLineWriter coloredLineWriter)
+        public UrlFinderConsumer(Web web, IColoredLineWriter coloredLineWriter)
         {
             _coloredLineWriter = coloredLineWriter;
             _urlRegex = BuildUrlRegex();
-            _linkConsumers = linkConsumers.ToList();
+            _web = web;
         }
 
         private static Regex BuildUrlRegex()
@@ -44,10 +44,7 @@ namespace Crawler
             {
                 PrintMatchEnvironment(match, success.Content);
                 var link = new Link(success.Url, new Uri(match.Value));
-                foreach (var linkConsumer in _linkConsumers) 
-                {
-                    linkConsumer.Consume(link);
-                }
+                _web.AddLink(link);
             }
         }
 
