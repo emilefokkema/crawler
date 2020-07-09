@@ -1,4 +1,6 @@
-﻿namespace Crawler
+﻿using Crawler.Results;
+
+namespace Crawler
 {
     public interface IResultConsumer
     {

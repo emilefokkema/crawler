@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Crawler.Results;
 
 namespace Crawler
 {
@@ -33,9 +35,14 @@ namespace Crawler
 
         private async Task<Result> HandleResponse(Uri url, HttpResponseMessage response)
         {
+            if (response.StatusCode == HttpStatusCode.Redirect)
+            {
+                return new RedirectResult(url, response.Headers.Location);
+            }
+
             if (!response.IsSuccessStatusCode)
             {
-                return new ErrorResult($"status code was ${response.StatusCode}");
+                return new ErrorResult($"status code was {response.StatusCode}");
             }
 
             var content = response.Content;

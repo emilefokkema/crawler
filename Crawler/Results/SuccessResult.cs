@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Crawler
+namespace Crawler.Results
 {
     public class SuccessResult: Result
     {
@@ -9,7 +9,6 @@ namespace Crawler
 
         public SuccessResult(Uri url, string content)
         {
-            Success = true;
             Url = url;
             Content = content;
         }

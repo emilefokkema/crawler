@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System;
 using System.Threading.Tasks;
+using Crawler.Results;
 
 namespace Crawler
 {
@@ -24,7 +25,7 @@ namespace Crawler
             string domainName = $"(?:{domainNamePart}\\.)+{domainNamePart}";
             string directory = @"[0-9a-z_\-]+";
             string fileNameBeforeExtension = @"[0-9a-z_\-+]+";
-            string fileName = $"{fileNameBeforeExtension}(?:\\.[a-z0-9]+)?";
+            string fileName = $"{fileNameBeforeExtension}(?:\\.[a-z0-9]+)*";
             string path = $"(/{directory})*/(?:{fileName})?";
             string queryParamName = @"[0-9a-z_\-]+";
             string queryParamValue = @"[0-9a-z_\-=]*";
@@ -35,6 +36,13 @@ namespace Crawler
 
         public void Consume(Result result)
         {
+            if (result is RedirectResult redirect)
+            {
+                _coloredLineWriter.WriteLine($"Redirected to {redirect.Location}", ConsoleColor.Green);
+                _web.AddLink(new Link(redirect.OriginalLocation, redirect.Location));
+                return;
+            }
+
             if (!(result is SuccessResult success))
             {
                 return;

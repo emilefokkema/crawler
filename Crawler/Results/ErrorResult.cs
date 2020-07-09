@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Crawler
+namespace Crawler.Results
 {
     public class ErrorResult: Result
     {
@@ -13,7 +13,6 @@ namespace Crawler
 
         public ErrorResult(string message)
         {
-            Success = false;
             Message = message;
         }
     }
