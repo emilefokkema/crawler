@@ -27,7 +27,7 @@ namespace Crawler
             string fileName = $"{fileNameBeforeExtension}(?:\\.[a-z0-9]+)?";
             string path = $"(/{directory})*/(?:{fileName})?";
             string queryParamName = @"[0-9a-z_\-]+";
-            string queryParamValue = @"[0-9a-z_\-]*";
+            string queryParamValue = @"[0-9a-z_\-=]*";
             string queryParam = $"{queryParamName}={queryParamValue}";
             string queryString = $"\\?{queryParam}(?:&{queryParam})*";
             return new Regex($"https?://{domainName}(?:{path})?(?:{queryString})?", RegexOptions.IgnoreCase);
