@@ -1,21 +1,26 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Crawler
 {
     public class Web : ILinkConsumer
     {
         private readonly IUrlQueue _urlQueue;
-        private readonly IColoredLineWriter _coloredLineWriter;
+        private List<Link> _links;
 
-        public Web(IUrlQueue urlQueue, IColoredLineWriter coloredLineWriter)
+        public Web(IUrlQueue urlQueue)
         {
             _urlQueue = urlQueue;
-            _coloredLineWriter = coloredLineWriter;
+            _links = new List<Link>();
         }
 
         public void Consume(Link link)
         {
-            _coloredLineWriter.WriteLine($"add link from {link.From} to {link.To}", ConsoleColor.DarkGray);
+            if (_links.Any(l => l.From.Equals(link.To)))
+            {
+                return;
+            }
+
             _urlQueue.Add(link.To);
         }
     }
