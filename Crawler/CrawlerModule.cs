@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using Autofac;
+using Crawler.Robots;
 
 namespace Crawler
 {
@@ -20,6 +21,7 @@ namespace Crawler
             builder.RegisterType<UrlFinderConsumer>().As<IResultConsumer>();
             builder.RegisterType<ErrorConsumer>().As<IResultConsumer>();
             builder.RegisterType<ColoredLineWriter>().As<IColoredLineWriter>();
+            builder.RegisterType<ReadRobots>().As<IRobots>();
             builder.RegisterType<Web>();
             builder.RegisterType<ManualCrawlerOperator>();
         }

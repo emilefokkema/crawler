@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Crawler.Results;
+using Crawler.Robots;
 
 namespace Crawler
 {
@@ -11,16 +11,14 @@ namespace Crawler
     {
         private readonly IUrlQueue _urlQueue;
         private List<Link> _links;
-        private readonly IColoredLineWriter _coloredLineWriter;
-        private readonly IClient _client;
+        private readonly IRobots _robots;
         private readonly ConcurrentDictionary<string, Domain> _domains;
 
-        public Web(IUrlQueue urlQueue, IColoredLineWriter coloredLineWriter, IClient client)
+        public Web(IUrlQueue urlQueue, IRobots robots)
         {
             _urlQueue = urlQueue;
-            _coloredLineWriter = coloredLineWriter;
             _links = new List<Link>();
-            _client = client;
+            _robots = robots;
             _domains = new ConcurrentDictionary<string, Domain>();
         }
 
@@ -30,28 +28,38 @@ namespace Crawler
             {
                 return;
             }
-
+            _links.Add(link);
             _urlQueue.Add(link.To);
         }
 
-        public async Task AddDomainFor(Uri uri)
+        private bool TryGetDomainForUrl(Uri url, out Domain domain)
         {
-            string domain = uri.Authority;
-            if (!_domains.TryAdd(domain, new Domain()))
+            string domainName = Domain.GetKeyForUrl(url);
+            if (_domains.ContainsKey(domainName))
+            {
+                domain = _domains[domainName];
+                return true;
+            }
+
+            var newDomain = Domain.CreateForUrl(url);
+            if (_domains.TryAdd(domainName, newDomain))
+            {
+                domain = newDomain;
+                return true;
+            }
+
+            domain = default;
+            return false;
+        }
+
+        public async Task VisitDomain(Uri uri)
+        {
+            if (!TryGetDomainForUrl(uri, out Domain domain))
             {
                 return;
             }
 
-            Uri robotsTxt = new Uri(new Uri($"{uri.Scheme}://{uri.Host}"), "robots.txt");
-            var result = await _client.Get(robotsTxt);
-            if (result is SuccessResult success)
-            {
-                _coloredLineWriter.WriteLine(success.Content, ConsoleColor.Blue);
-            }
-            else if(result is ErrorResult error)
-            {
-                _coloredLineWriter.WriteLine($"Could not get {robotsTxt}:" + error.Message, ConsoleColor.Red);
-            }
+            await _robots.AddRulesToDomain(domain);
         }
     }
 }

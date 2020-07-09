@@ -29,7 +29,7 @@ namespace Crawler
 
             Task.Run(async () =>
             {
-                await _web.AddDomainFor(url);
+                await _web.VisitDomain(url);
                 var result = await _client.Get(url);
                 foreach (var consumer in _consumers)
                 {
