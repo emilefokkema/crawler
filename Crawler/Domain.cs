@@ -5,8 +5,8 @@ namespace Crawler
 {
     public class Domain
     {
-        private IRobotsRule _robotsRule;
         public string Host { get; }
+        public IRobotsRule Robots { get; set; }
         public Uri Url { get; }
 
         public Domain(string host, Uri url)
@@ -23,21 +23,6 @@ namespace Crawler
         public static string GetKeyForUrl(Uri url)
         {
             return url.Host;
-        }
-
-        public void SetRobotsRule(IRobotsRule rule)
-        {
-            if (rule == null)
-            {
-                return;
-            }
-
-            _robotsRule = rule;
-        }
-
-        public bool HasRobotsRule()
-        {
-            return _robotsRule != null;
         }
 
         public static Domain CreateForUrl(Uri url)
