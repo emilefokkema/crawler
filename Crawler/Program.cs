@@ -15,7 +15,7 @@ namespace Crawler
             var crawlerOperator = container.Resolve<ManualCrawlerOperator>();
             var urlQueue = container.Resolve<IUrlQueue>();
             //urlQueue.Add("https://www.iana.org/domains/example");
-            urlQueue.Add(new Uri("http://www.example.com"));
+            urlQueue.Add(new Uri("https://features.icann.org/user/login"));
             await crawlerOperator.Start();
         }
     }

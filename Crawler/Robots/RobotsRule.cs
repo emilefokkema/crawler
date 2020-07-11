@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Crawler.Robots.UrlMatchers;
 
 namespace Crawler.Robots
@@ -12,6 +14,21 @@ namespace Crawler.Robots
         {
             _allowed = allowed;
             _disallowed = disallowed;
+        }
+
+        public bool AllowsVisitToUrl(Uri url)
+        {
+            var disallowedMatch = _disallowed.FirstOrDefault(matcher => matcher.Matches(url));
+            if (disallowedMatch == null) 
+            {
+                return true;
+            }
+            var allowedMatch = _allowed.FirstOrDefault(matcher => matcher.Matches(url));
+            if (allowedMatch == null) 
+            {
+                return false;
+            }
+            return allowedMatch.IsMoreSpecificThan(disallowedMatch);
         }
     }
 }

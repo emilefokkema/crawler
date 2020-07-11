@@ -12,14 +12,16 @@ namespace Crawler
         private readonly IUrlQueue _urlQueue;
         private List<Link> _links;
         private readonly IRobots _robots;
+        private readonly IColoredLineWriter _coloredLineWriter;
         private readonly ConcurrentDictionary<string, Domain> _domains;
 
-        public Web(IUrlQueue urlQueue, IRobots robots)
+        public Web(IUrlQueue urlQueue, IRobots robots, IColoredLineWriter coloredLineWriter)
         {
             _urlQueue = urlQueue;
             _links = new List<Link>();
             _robots = robots;
             _domains = new ConcurrentDictionary<string, Domain>();
+            _coloredLineWriter = coloredLineWriter;
         }
 
         public void AddLink(Link link)
@@ -30,6 +32,20 @@ namespace Crawler
             }
             _links.Add(link);
             _urlQueue.Add(link.To);
+        }
+
+        public bool AllowsVisitToUrl(Uri url)
+        {
+            if (!TryGetDomainForUrl(url, out Domain domain)) 
+            {
+                return false;
+            }
+            var result = domain.AllowsVisitToUrl(url);
+            if (!result) 
+            {
+                _coloredLineWriter.WriteLine($"domain {domain.Url} does not allow visiting {url}", ConsoleColor.Red);
+            }
+            return result;
         }
 
         private bool TryGetDomainForUrl(Uri url, out Domain domain)

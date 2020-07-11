@@ -47,7 +47,7 @@ namespace Crawler.Robots
         {
             content = Regex.Replace(content, @"#.*$", "", RegexOptions.Multiline);
             _coloredLineWriter.WriteLine(content, ConsoleColor.Blue);
-            var match = new Regex(@"User-agent: \*(?:\s*(?:Disallow|Allow|Crawl-delay):.*?)*").Match(content);
+            var match = new Regex(@"User-agent: \*(?:\s*(?:Disallow|Allow|Crawl-delay):.*)*").Match(content);
             var noop = new NoopRobotsRule();
             if (!match.Success)
             {

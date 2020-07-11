@@ -30,6 +30,10 @@ namespace Crawler
             Task.Run(async () =>
             {
                 await _web.VisitDomain(url);
+                if (!_web.AllowsVisitToUrl(url)) 
+                {
+                    return;
+                }
                 var result = await _client.Get(url);
                 foreach (var consumer in _consumers)
                 {

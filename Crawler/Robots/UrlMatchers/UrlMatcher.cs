@@ -6,6 +6,7 @@ namespace Crawler.Robots.UrlMatchers
     public abstract class UrlMatcher
     {
         public abstract bool Matches(Uri url);
+        public abstract bool IsMoreSpecificThan(UrlMatcher other);
         public static bool TryParse(string matcher, out UrlMatcher result)
         {
             if (string.IsNullOrWhiteSpace(matcher))

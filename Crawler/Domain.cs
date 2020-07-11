@@ -17,7 +17,7 @@ namespace Crawler
 
         public bool AllowsVisitToUrl(Uri url)
         {
-            return true;
+            return Robots == null || Robots.AllowsVisitToUrl(url);
         }
 
         public static string GetKeyForUrl(Uri url)
