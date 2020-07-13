@@ -7,6 +7,7 @@ namespace Crawler
     public class UrlQueue: IUrlQueue
     {
         private readonly ConcurrentQueue<Uri> _urls;
+        public int Count => _urls.Count;
 
         public UrlQueue()
         {

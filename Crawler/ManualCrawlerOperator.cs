@@ -19,11 +19,11 @@ namespace Crawler
             {
                 if (_urlQueue.TryPeek(out Uri nextInLine))
                 {
-                    Console.WriteLine($"Press p to process {nextInLine}, q to quit or s to skip");
+                    Console.WriteLine($"Press p to process {nextInLine}, q to quit or s to skip ({_urlQueue.Count} left to process)");
                 }
                 else
                 {
-                    Console.WriteLine($"Press p to process a url, or q to quit");
+                    Console.WriteLine($"Press p to process a url, or q to quit ({_urlQueue.Count} left to process)");
                 }
 
 
@@ -42,7 +42,10 @@ namespace Crawler
                     }
                 }else if (action == ManualAction.Skip)
                 {
-                    _urlQueue.TryDequeue(out var _);
+                    if(_urlQueue.TryDequeue(out var dequeued))
+                    {
+                        _urlQueue.Add(dequeued);
+                    }
                 }
             }
         }

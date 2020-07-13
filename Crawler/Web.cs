@@ -24,14 +24,33 @@ namespace Crawler
             _coloredLineWriter = coloredLineWriter;
         }
 
-        public void AddLink(Link link)
+        public void AddLinks(Uri from, IEnumerable<Uri> to)
         {
-            if (_links.Any(l => l.From.Equals(link.To)))
+            List<Uri> urlsToEnqueue = new List<Uri>();
+            foreach (Uri toUrl in to)
             {
-                return;
+                if (_links.Any(l => l.From.Equals(from) && l.To.Equals(toUrl)))
+                {
+                    continue;
+                }
+
+                if (!_links.Any(l => l.To.Equals(toUrl)))
+                {
+                    urlsToEnqueue.Add(toUrl);
+                }
+                _links.Add(new Link(from, toUrl));
             }
-            _links.Add(link);
-            _urlQueue.Add(link.To);
+
+            if (urlsToEnqueue.Count == 0)
+            {
+                _coloredLineWriter.WriteLine("No new urls to enqueue", ConsoleColor.Yellow);
+            }
+
+            foreach (var urlToEnqueue in urlsToEnqueue)
+            {
+                _coloredLineWriter.WriteLine($"adding {urlToEnqueue} to queue", ConsoleColor.Green);
+                _urlQueue.Add(urlToEnqueue);
+            }
         }
 
         public bool AllowsVisitToUrl(Uri url)
