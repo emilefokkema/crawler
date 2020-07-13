@@ -15,7 +15,7 @@ namespace Crawler.Robots.UrlMatchers
                 return true;
             }
 
-            if (new Regex(@"^\s*/\s*$").IsMatch(matcher))
+            if (new Regex(@"^\s*/\*?\s*$").IsMatch(matcher))
             {
                 result = new Everything();
                 return true;

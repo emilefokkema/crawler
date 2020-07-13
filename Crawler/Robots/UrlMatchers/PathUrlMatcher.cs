@@ -23,7 +23,11 @@ namespace Crawler.Robots.UrlMatchers
         public PathUrlMatcher(string robotsUrlPattern)
         {
             UrlPattern = robotsUrlPattern;
-            _regex = new Regex($"^.*{robotsUrlPattern}.*$");
+            string regexPattern = Regex.Replace(robotsUrlPattern, @"[^\*\$]+", match => Regex.Escape(match.Value));
+            regexPattern = Regex.Replace(regexPattern, @"\*$", "");
+            regexPattern = Regex.Replace(regexPattern, @"\*", ".*");
+            regexPattern = $"^.*{regexPattern}.*$";
+            _regex = new Regex(regexPattern);
         }
     }
 }
