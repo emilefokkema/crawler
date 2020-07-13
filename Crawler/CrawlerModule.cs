@@ -22,7 +22,7 @@ namespace Crawler
             builder.RegisterType<ErrorConsumer>().As<IResultConsumer>();
             builder.RegisterType<ColoredLineWriter>().As<IColoredLineWriter>();
             builder.RegisterType<ReadRobots>().As<IRobots>();
-            builder.RegisterType<Web>();
+            builder.RegisterType<Web>().SingleInstance();
             builder.RegisterType<ManualCrawlerOperator>();
         }
     }
