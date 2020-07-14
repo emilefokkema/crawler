@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System;
+using Crawler.Logging;
 using Crawler.Results;
 
 namespace Crawler
@@ -11,10 +12,10 @@ namespace Crawler
         private readonly Regex _urlRegex;
         private readonly Regex _unwantedUrlRegex;
         private readonly Web _web;
-        private readonly IColoredLineWriter _coloredLineWriter;
-        public UrlFinderConsumer(Web web, IColoredLineWriter coloredLineWriter)
+        private readonly ILogger _logger;
+        public UrlFinderConsumer(Web web, ILogger logger)
         {
-            _coloredLineWriter = coloredLineWriter;
+            _logger = logger;
             _urlRegex = BuildUrlRegex();
             _unwantedUrlRegex = new Regex(@"\.(?!html?)[a-z0-9]+(?:$|\?)", RegexOptions.IgnoreCase);
             _web = web;
@@ -39,7 +40,7 @@ namespace Crawler
         {
             if (result is RedirectResult redirect)
             {
-                _coloredLineWriter.WriteLine($"Redirected to {redirect.Location}", ConsoleColor.Green);
+                _logger.LogInfo($"Redirected to {redirect.Location}");
                 _web.AddLinks(redirect.OriginalLocation, new List<Uri>{redirect.Location});
                 return;
             }

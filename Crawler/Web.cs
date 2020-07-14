@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Crawler.Logging;
 using Crawler.Robots;
 
 namespace Crawler
@@ -12,16 +13,16 @@ namespace Crawler
         private readonly IUrlQueue _urlQueue;
         private List<Link> _links;
         private readonly IRobots _robots;
-        private readonly IColoredLineWriter _coloredLineWriter;
+        private readonly ILogger _logger;
         private readonly ConcurrentDictionary<string, Domain> _domains;
 
-        public Web(IUrlQueue urlQueue, IRobots robots, IColoredLineWriter coloredLineWriter)
+        public Web(IUrlQueue urlQueue, IRobots robots, ILogger logger)
         {
             _urlQueue = urlQueue;
             _links = new List<Link>();
             _robots = robots;
             _domains = new ConcurrentDictionary<string, Domain>();
-            _coloredLineWriter = coloredLineWriter;
+            _logger = logger;
         }
 
         public void AddLinks(Uri from, IEnumerable<Uri> to)
@@ -43,12 +44,14 @@ namespace Crawler
 
             if (urlsToEnqueue.Count == 0)
             {
-                _coloredLineWriter.WriteLine("No new urls to enqueue", ConsoleColor.Yellow);
+                _logger.LogDebug($"No new urls to enqueue from {from}");
             }
-
+            else
+            {
+                _logger.LogDebug($"Adding {urlsToEnqueue.Count} urls to queue from {from}");
+            }
             foreach (var urlToEnqueue in urlsToEnqueue)
             {
-                _coloredLineWriter.WriteLine($"adding {urlToEnqueue} to queue", ConsoleColor.Green);
                 _urlQueue.Add(urlToEnqueue);
             }
         }
@@ -62,7 +65,7 @@ namespace Crawler
             var result = domain.AllowsVisitToUrl(url);
             if (!result) 
             {
-                _coloredLineWriter.WriteLine($"domain {domain.Url} does not allow visiting {url}", ConsoleColor.Red);
+                _logger.LogWarning($"domain {domain.Url} does not allow visiting {url}");
             }
             return result;
         }

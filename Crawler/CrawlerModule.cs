@@ -1,5 +1,7 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using Autofac;
+using Crawler.Logging;
 using Crawler.Robots;
 
 namespace Crawler
@@ -13,6 +15,7 @@ namespace Crawler
                 var client = new HttpClient();
                 client.DefaultRequestHeaders.UserAgent.TryParseAdd(
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36");
+                client.Timeout = TimeSpan.FromSeconds(5);
                 return client;
             }).SingleInstance();
             builder.RegisterType<Client>().As<IClient>().SingleInstance();
@@ -20,7 +23,8 @@ namespace Crawler
             builder.RegisterType<Crawler>().As<ICrawler>().SingleInstance();
             builder.RegisterType<UrlFinderConsumer>().As<IResultConsumer>();
             builder.RegisterType<ErrorConsumer>().As<IResultConsumer>();
-            builder.RegisterType<ColoredLineWriter>().As<IColoredLineWriter>();
+            builder.RegisterType<ColoredLineWriter>().As<IColoredLineWriter>().SingleInstance();
+            builder.RegisterType<Logger>().As<ILogger>().SingleInstance();
             builder.RegisterType<ReadRobots>().As<IRobots>();
             builder.RegisterType<Web>().SingleInstance();
             builder.RegisterType<ManualCrawlerOperator>();

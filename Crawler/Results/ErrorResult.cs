@@ -6,7 +6,7 @@ namespace Crawler.Results
     {
         public string Message { get; }
 
-        public ErrorResult(Exception e):this(e.Message)
+        public ErrorResult(string msg, Exception e):this(msg + ": " + e.Message)
         {
             
         }

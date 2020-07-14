@@ -19,11 +19,6 @@ namespace Crawler
             return _urls.TryDequeue(out url);
         }
 
-        public bool TryPeek(out Uri url)
-        {
-            return _urls.TryPeek(out url);
-        }
-
         public void Add(Uri url)
         {
             if (_urls.Contains(url))

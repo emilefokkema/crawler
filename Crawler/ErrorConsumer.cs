@@ -1,15 +1,15 @@
-﻿using System;
+﻿using Crawler.Logging;
 using Crawler.Results;
 
 namespace Crawler
 {
     public class ErrorConsumer: IResultConsumer
     {
-        private readonly IColoredLineWriter _coloredLineWriter;
+        private readonly ILogger _logger;
 
-        public ErrorConsumer(IColoredLineWriter coloredLineWriter)
+        public ErrorConsumer(ILogger logger)
         {
-            _coloredLineWriter = coloredLineWriter;
+            _logger = logger;
         }
 
         public void Consume(Result result)
@@ -18,7 +18,7 @@ namespace Crawler
             {
                 return;
             }
-            _coloredLineWriter.WriteLine(error.Message, ConsoleColor.Red);
+            _logger.LogError(error.Message);
         }
     }
 }

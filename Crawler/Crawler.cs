@@ -29,17 +29,28 @@ namespace Crawler
 
             Task.Run(async () =>
             {
-                await _web.VisitDomain(url);
-                if (!_web.AllowsVisitToUrl(url)) 
+                try
                 {
-                    return;
+                    await _web.VisitDomain(url);
+                    if (!_web.AllowsVisitToUrl(url))
+                    {
+                        return;
+                    }
+
+                    var result = await _client.Get(url);
+                    foreach (var consumer in _consumers)
+                    {
+                        consumer.Consume(result);
+                    }
                 }
-                var result = await _client.Get(url);
-                foreach (var consumer in _consumers)
+                catch (Exception e)
                 {
-                    consumer.Consume(result);
+                    Console.WriteLine(e);
                 }
-                ProcessedUrl?.Invoke(this, new ProcessedUrlEventArgs(url));
+                finally
+                {
+                    ProcessedUrl?.Invoke(this, new ProcessedUrlEventArgs(url));
+                }
             });
             return true;
         }

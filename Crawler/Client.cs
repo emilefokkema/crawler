@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Crawler.Logging;
 using Crawler.Results;
 
 namespace Crawler
@@ -9,16 +10,16 @@ namespace Crawler
     public class Client: IClient
     {
         private readonly HttpClient _httpClient;
-        private readonly IColoredLineWriter _coloredLineWriter;
-        public Client(HttpClient httpClient, IColoredLineWriter coloredLineWriter)
+        private readonly ILogger _logger;
+        public Client(HttpClient httpClient, ILogger logger)
         {
             _httpClient = httpClient;
-            _coloredLineWriter = coloredLineWriter;
+            _logger = logger;
         }
 
         public async Task<Result> Get(Uri url)
         {
-            _coloredLineWriter.WriteLine($"Going to get {url}", ConsoleColor.Yellow);
+            _logger.LogInfo($"Going to get {url}");
             var request = new HttpRequestMessage();
             request.RequestUri = url;
             request.Method = HttpMethod.Get;
@@ -29,7 +30,7 @@ namespace Crawler
             }
             catch (Exception e)
             {
-                return new ErrorResult(e);
+                return new ErrorResult($"Could not get {url}: ", e);
             }
         }
 
@@ -42,7 +43,7 @@ namespace Crawler
 
             if (!response.IsSuccessStatusCode)
             {
-                return new ErrorResult($"status code was {response.StatusCode}");
+                return new ErrorResult($"status code for {url} was {response.StatusCode}");
             }
 
             var content = response.Content;

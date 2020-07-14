@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Crawler.Robots;
 
 namespace Crawler
 {
     public class Domain
     {
+        public Task WhenRobotsRuleHasBeenSet { get; set; }
+        public bool RobotsRuleIsBeingSet { get; set; }
         public string Host { get; }
         public IRobotsRule Robots { get; set; }
         public Uri Url { get; }

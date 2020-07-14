@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Crawler.Logging;
 
 namespace Crawler
 {
@@ -7,24 +8,21 @@ namespace Crawler
     {
         private readonly ICrawler _crawler;
         private readonly IUrlQueue _urlQueue;
-        public ManualCrawlerOperator(ICrawler crawler, IUrlQueue urlQueue)
+        private readonly IColoredLineWriter _coloredLineWriter;
+        private readonly int _noUrlsAtATime;
+        public ManualCrawlerOperator(ICrawler crawler, IUrlQueue urlQueue, IColoredLineWriter coloredLineWriter)
         {
             _crawler = crawler;
             _urlQueue = urlQueue;
+            _coloredLineWriter = coloredLineWriter;
+            _noUrlsAtATime = 2;
         }
 
         public async Task Start()
         {
             while (true)
             {
-                if (_urlQueue.TryPeek(out Uri nextInLine))
-                {
-                    Console.WriteLine($"Press p to process {nextInLine}, q to quit or s to skip ({_urlQueue.Count} left to process)");
-                }
-                else
-                {
-                    Console.WriteLine($"Press p to process a url, or q to quit ({_urlQueue.Count} left to process)");
-                }
+                _coloredLineWriter.WriteLine($"Press p to process a url, or q to quit ({_urlQueue.Count} left to process)", ConsoleColor.White);
 
 
                 ManualAction action = GetKnownAction();
@@ -35,11 +33,7 @@ namespace Crawler
                 }
                 if (action == ManualAction.Process)
                 {
-                    bool processed = _crawler.ProcessUrl();
-                    if (processed)
-                    {
-                        await WhenUrlIsProcessed();
-                    }
+                    await ProcessUrls();
                 }else if (action == ManualAction.Skip)
                 {
                     if(_urlQueue.TryDequeue(out var dequeued))
@@ -50,12 +44,25 @@ namespace Crawler
             }
         }
 
-        private async Task WhenUrlIsProcessed()
+        private async Task ProcessUrls()
         {
+            int noBeingProcessed = 0;
+            int noProcessed = 0;
+            for (int i = 0; i < _noUrlsAtATime; i++) 
+            {
+                if (_crawler.ProcessUrl())
+                {
+                    noBeingProcessed++;
+                }
+            }
             var source = new TaskCompletionSource<object>();
             EventHandler<ProcessedUrlEventArgs> handler = (s, e) =>
             {
-                source.SetResult(null);
+                noProcessed++;
+                if (noProcessed >= noBeingProcessed)
+                {
+                    source.SetResult(null);
+                }
             };
             _crawler.ProcessedUrl += handler;
             await source.Task;
@@ -64,7 +71,7 @@ namespace Crawler
 
         private void Quit()
         {
-            Console.WriteLine("bye");
+            _coloredLineWriter.WriteLine("bye", ConsoleColor.White);
         }
 
         private ManualAction GetKnownAction()

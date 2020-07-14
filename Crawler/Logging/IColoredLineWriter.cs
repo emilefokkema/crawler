@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Crawler
+namespace Crawler.Logging
 {
     public interface IColoredLineWriter
     {
