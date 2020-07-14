@@ -1,23 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Crawler.UrlProcessor;
 
 namespace Crawler
 {
     public class Crawler: ICrawler
     {
         public event EventHandler<ProcessedUrlEventArgs> ProcessedUrl;
-        private readonly IClient _client;
         private readonly IUrlQueue _urlQueue;
-        private readonly Web _web;
-        private readonly List<IResultConsumer> _consumers;
-        public Crawler(IClient client, IUrlQueue urlQueue, Web web, IEnumerable<IResultConsumer> consumers)
+        private readonly IUrlProcessorFactory _urlProcessorFactory;
+        public Crawler(IUrlQueue urlQueue, IUrlProcessorFactory urlProcessorFactory)
         {
-            _client = client;
-            _consumers = consumers.ToList();
-            _web = web;
             _urlQueue = urlQueue;
+            _urlProcessorFactory = urlProcessorFactory;
         }
 
         public bool ProcessUrl()
@@ -31,17 +26,8 @@ namespace Crawler
             {
                 try
                 {
-                    await _web.VisitDomain(url);
-                    if (!_web.AllowsVisitToUrl(url))
-                    {
-                        return;
-                    }
-
-                    var result = await _client.Get(url);
-                    foreach (var consumer in _consumers)
-                    {
-                        consumer.Consume(result);
-                    }
+                    var urlProcessor = _urlProcessorFactory.Create(url);
+                    await urlProcessor.Process();
                 }
                 catch (Exception e)
                 {

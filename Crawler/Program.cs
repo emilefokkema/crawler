@@ -10,8 +10,7 @@ namespace Crawler
         {
             var builder = new ContainerBuilder();
             builder.RegisterModule<CrawlerModule>();
-            var container = builder.Build();
-
+            await using var container = builder.Build();
             var crawlerOperator = container.Resolve<ManualCrawlerOperator>();
             var urlQueue = container.Resolve<IUrlQueue>();
             //urlQueue.Add("https://www.iana.org/domains/example");

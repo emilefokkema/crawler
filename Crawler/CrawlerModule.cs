@@ -3,11 +3,13 @@ using System.Net.Http;
 using Autofac;
 using Crawler.Logging;
 using Crawler.Robots;
+using Crawler.UrlProcessor;
 
 namespace Crawler
 {
     public class CrawlerModule: Module
     {
+
         protected override void Load(ContainerBuilder builder)
         {
             builder.Register((c) =>
@@ -18,7 +20,7 @@ namespace Crawler
                 client.Timeout = TimeSpan.FromSeconds(5);
                 return client;
             }).SingleInstance();
-            builder.RegisterType<Client>().As<IClient>().SingleInstance();
+            builder.RegisterType<Client>().As<IClient>();
             builder.RegisterType<UrlQueue>().As<IUrlQueue>().SingleInstance();
             builder.RegisterType<Crawler>().As<ICrawler>().SingleInstance();
             builder.RegisterType<UrlFinderConsumer>().As<IResultConsumer>();
@@ -27,6 +29,8 @@ namespace Crawler
             builder.RegisterType<Logger>().As<ILogger>().SingleInstance();
             builder.RegisterType<ReadRobots>().As<IRobots>();
             builder.RegisterType<Web>().SingleInstance();
+            builder.RegisterType<UrlProcessor.UrlProcessor>().InstancePerLifetimeScope();
+            builder.RegisterType<UrlProcessorFactory>().As<IUrlProcessorFactory>();
             builder.RegisterType<ManualCrawlerOperator>();
         }
     }
