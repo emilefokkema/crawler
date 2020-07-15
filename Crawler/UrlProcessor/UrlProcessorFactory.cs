@@ -1,5 +1,6 @@
 ﻿using System;
 using Autofac;
+using Crawler.Logging;
 
 namespace Crawler.UrlProcessor
 {
@@ -17,7 +18,7 @@ namespace Crawler.UrlProcessor
             return _lifetimeScope.BeginLifetimeScope(builder =>
             {
                 builder.RegisterInstance(new UrlToProcess(url));
-
+                builder.RegisterDecorator<DecoratedLogger, ILogger>();
             }).Resolve<UrlProcessor>();
         }
     }

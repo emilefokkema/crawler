@@ -26,7 +26,7 @@ namespace Crawler
             builder.RegisterType<UrlFinderConsumer>().As<IResultConsumer>();
             builder.RegisterType<ErrorConsumer>().As<IResultConsumer>();
             builder.RegisterType<ColoredLineWriter>().As<IColoredLineWriter>().SingleInstance();
-            builder.RegisterType<Logger>().As<ILogger>().SingleInstance();
+            builder.RegisterType<Logger>().As<ILogger>();
             builder.RegisterType<ReadRobots>().As<IRobots>();
             builder.RegisterType<Web>().SingleInstance();
             builder.RegisterType<UrlProcessor.UrlProcessor>().InstancePerLifetimeScope();

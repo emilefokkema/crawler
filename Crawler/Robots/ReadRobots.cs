@@ -39,7 +39,7 @@ namespace Crawler.Robots
                 var result = await _client.Get(robotsTxt);
                 if (result is SuccessResult success)
                 {
-                    IRobotsRule rule = GetRuleFromContent(domain.Url, success.Content);
+                    IRobotsRule rule = GetRuleFromContent(success.Content);
                     if (rule != null)
                     {
                         domain.Robots = rule;
@@ -47,7 +47,7 @@ namespace Crawler.Robots
                 }
                 else if (result is ErrorResult error)
                 {
-                    _logger.LogWarning($"Could not get {robotsTxt}:" + error.Message);
+                    _logger.LogWarning($"Could not get robots.txt:" + error.Message);
                     domain.Robots = new NoopRobotsRule();
                 }
 
@@ -56,7 +56,7 @@ namespace Crawler.Robots
             return domain.WhenRobotsRuleHasBeenSet;
         }
 
-        private IRobotsRule GetRuleFromContent(Uri domainUrl, string content)
+        private IRobotsRule GetRuleFromContent(string content)
         {
             content = Regex.Replace(content, @"#.*$", "", RegexOptions.Multiline);
             var match = new Regex(@"User-agent: \*(?:\s*(?:Disallow|Allow|Crawl-delay):.*)*").Match(content);
@@ -69,7 +69,7 @@ namespace Crawler.Robots
             string forAllAgents = match.Value;
             var disallowed = GetUrlMatchers(new Regex(@"Disallow:(.*)").Matches(forAllAgents).Select(m => m.Groups[1].Value)).ToList();
             var allowed = GetUrlMatchers(new Regex(@"Allow:(.*)").Matches(forAllAgents).Select(m => m.Groups[1].Value)).ToList();
-            _logger.LogDebug($"found robots rule at {domainUrl} with {disallowed.Count} disallowed and {allowed.Count} allowed");
+            _logger.LogDebug($"found robots rule with {disallowed.Count} disallowed and {allowed.Count} allowed");
             return new RobotsRule(allowed, disallowed);
         }
 

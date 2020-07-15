@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 
 namespace Crawler.Logging
 {
@@ -34,7 +33,7 @@ namespace Crawler.Logging
 
         private void LogInColor(string message, ConsoleColor color)
         {
-            _coloredLineWriter.WriteLine($"[thread {Thread.CurrentThread.ManagedThreadId}] {message}", color);
+            _coloredLineWriter.WriteLine(message, color);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System;
 using Crawler.Logging;
 using Crawler.Results;
+using Crawler.UrlProcessor;
 
 namespace Crawler
 {
@@ -12,10 +13,14 @@ namespace Crawler
         private readonly Regex _urlRegex;
         private readonly Regex _unwantedUrlRegex;
         private readonly Web _web;
+        private readonly IUrlQueue _urlQueue;
         private readonly ILogger _logger;
-        public UrlFinderConsumer(Web web, ILogger logger)
+        private readonly UrlToProcess _urlToProcess;
+        public UrlFinderConsumer(Web web, ILogger logger, IUrlQueue urlQueue, UrlToProcess urlToProcess)
         {
             _logger = logger;
+            _urlQueue = urlQueue;
+            _urlToProcess = urlToProcess;
             _urlRegex = BuildUrlRegex();
             _unwantedUrlRegex = new Regex(@"\.(?!html?)[a-z0-9]+(?:$|\?)", RegexOptions.IgnoreCase);
             _web = web;
@@ -41,7 +46,7 @@ namespace Crawler
             if (result is RedirectResult redirect)
             {
                 _logger.LogInfo($"Redirected to {redirect.Location}");
-                _web.AddLinks(redirect.OriginalLocation, new List<Uri>{redirect.Location});
+                AddLinks(new List<Uri>{redirect.Location});
                 return;
             }
 
@@ -52,7 +57,25 @@ namespace Crawler
 
             List<Uri> matches = _urlRegex.Matches(success.Content).Select(m => new Uri(m.Value)).Distinct().ToList();
             matches = matches.Where(m => !m.Equals(success.Url) && !_unwantedUrlRegex.IsMatch(m.ToString())).ToList();
-            _web.AddLinks(success.Url, matches);
+            AddLinks(matches);
+        }
+
+        private void AddLinks(List<Uri> urls)
+        {
+            List<Uri> urlsToEnqueue = urls.Where(url => !_web.ContainsLinkTarget(url)).ToList();
+            _web.AddLinks(_urlToProcess.Url, urls);
+            if (urlsToEnqueue.Count == 0)
+            {
+                _logger.LogDebug($"No new urls to enqueue");
+            }
+            else
+            {
+                _logger.LogDebug($"Adding {urlsToEnqueue.Count} urls to queue");
+            }
+            foreach (var urlToEnqueue in urlsToEnqueue)
+            {
+                _urlQueue.Add(urlToEnqueue);
+            }
         }
     }
 }

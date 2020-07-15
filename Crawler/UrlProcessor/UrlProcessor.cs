@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Crawler.Logging;
+using Crawler.Robots;
 
 namespace Crawler.UrlProcessor
 {
@@ -10,20 +12,25 @@ namespace Crawler.UrlProcessor
         private readonly Web _web;
         private readonly IClient _client;
         private readonly List<IResultConsumer> _consumers;
+        private readonly ILogger _logger;
+        private readonly IRobots _robots;
 
-        public UrlProcessor(UrlToProcess urlToProcess, Web web, IClient client, IEnumerable<IResultConsumer> consumers)
+        public UrlProcessor(UrlToProcess urlToProcess, Web web, IClient client, IEnumerable<IResultConsumer> consumers, ILogger logger, IRobots robots)
         {
             _urlToProcess = urlToProcess;
             _web = web;
             _client = client;
+            _logger = logger;
+            _robots = robots;
             _consumers = consumers.ToList();
         }
 
         public async Task Process()
         {
-            await _web.VisitDomain(_urlToProcess.Url);
+            await VisitDomain();
             if (!_web.AllowsVisitToUrl(_urlToProcess.Url))
             {
+                _logger.LogWarning($"domain does not allow visiting");
                 return;
             }
 
@@ -32,6 +39,16 @@ namespace Crawler.UrlProcessor
             {
                 consumer.Consume(result);
             }
+        }
+
+        private async Task VisitDomain()
+        {
+            if (!_web.TryGetDomainForUrl(_urlToProcess.Url, out Domain domain))
+            {
+                return;
+            }
+
+            await _robots.AddRulesToDomain(domain);
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Crawler.Logging
+﻿namespace Crawler.Logging
 {
     public interface ILogger
     {
