@@ -1,0 +1,56 @@
+{
+	"domains": [
+		{
+			"name": "foo",
+			"robots": "User-agent: *\nDisallow: /stop",
+			"pages": [
+				{
+					"path": "/",
+					"links": [
+						{
+							"domain": "bar",
+							"path": "/",
+							"title": "bar"
+						},
+						{
+							"domain": "bar",
+							"path": "/blue",
+							"title": "bar/blue"
+						},
+						{
+							"domain": "foo",
+							"path": "/red",
+							"title": "red"
+						}
+					]
+				},
+				{
+					"path": "/red",
+					"links": [
+						{
+							"domain": "foo",
+							"path": "/",
+							"title": "back"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "bar",
+			"robots": "User-agent: *\nDisallow: /stop",
+			"pages": [
+				{
+					"path": "/",
+					"links": [
+					]
+				},
+				{
+					"path": "/blue",
+					"links": [
+					]
+				}
+			]
+		}
+	]
+}

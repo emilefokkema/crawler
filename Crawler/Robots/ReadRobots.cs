@@ -24,11 +24,13 @@ namespace Crawler.Robots
         {
             if (domain.RobotsRuleIsBeingSet)
             {
+                _logger.LogDebug("robot is already being set for domain");
                 return domain.WhenRobotsRuleHasBeenSet;
             }
 
             if (domain.Robots != null)
             {
+                _logger.LogDebug("robot has already been set for domain");
                 return Task.CompletedTask;
             }
 

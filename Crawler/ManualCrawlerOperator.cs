@@ -55,18 +55,26 @@ namespace Crawler
                     noBeingProcessed++;
                 }
             }
+
+            if (noBeingProcessed == 0)
+            {
+                return;
+            }
+
             var source = new TaskCompletionSource<object>();
-            EventHandler<ProcessedUrlEventArgs> handler = (s, e) =>
+
+            void Handler(object s, ProcessedUrlEventArgs e)
             {
                 noProcessed++;
                 if (noProcessed >= noBeingProcessed)
                 {
                     source.SetResult(null);
                 }
-            };
-            _crawler.ProcessedUrl += handler;
+            }
+
+            _crawler.ProcessedUrl += Handler;
             await source.Task;
-            _crawler.ProcessedUrl -= handler;
+            _crawler.ProcessedUrl -= Handler;
         }
 
         private void Quit()

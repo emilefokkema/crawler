@@ -33,7 +33,7 @@ namespace Crawler.Logging
 
         private void LogInColor(string message, ConsoleColor color)
         {
-            _coloredLineWriter.WriteLine(message, color);
+            _coloredLineWriter.WriteLine($"[{DateTime.Now.Millisecond}] {message}", color);
         }
     }
 }

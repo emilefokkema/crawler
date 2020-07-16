@@ -29,7 +29,7 @@ namespace Crawler
         private static Regex BuildUrlRegex()
         {
             string domainNamePart = @"[0-9a-z_\-]+";
-            string domainName = $"(?:{domainNamePart}\\.)+{domainNamePart}";
+            string domainName = $"(?:{domainNamePart}\\.)+{domainNamePart}(?:\\:\\d+)?";
             string directory = @"[0-9a-z_\-]+";
             string fileNameBeforeExtension = @"[0-9a-z_\-+]+";
             string fileName = $"{fileNameBeforeExtension}(?:\\.[a-z0-9]+)*";

@@ -30,7 +30,7 @@ namespace Crawler
 
         public static Domain CreateForUrl(Uri url)
         {
-            Uri domainUrl = new Uri($"{url.Scheme}://{url.Host}");
+            Uri domainUrl = new Uri($"{url.Scheme}://{url.Authority}");
             return new Domain(url.Host, domainUrl);
         }
     }

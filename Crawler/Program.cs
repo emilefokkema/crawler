@@ -13,8 +13,8 @@ namespace Crawler
             await using var container = builder.Build();
             var crawlerOperator = container.Resolve<ManualCrawlerOperator>();
             var urlQueue = container.Resolve<IUrlQueue>();
-            //urlQueue.Add("https://www.iana.org/domains/example");
-            urlQueue.Add(new Uri("http://nu.nl"));
+            urlQueue.Add(new Uri("http://foo.crawlable.web:8080/"));
+            //urlQueue.Add(new Uri("http://nu.nl"));
             await crawlerOperator.Start();
         }
     }

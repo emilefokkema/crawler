@@ -43,9 +43,11 @@ namespace Crawler.UrlProcessor
 
         private async Task VisitDomain()
         {
-            if (!_web.TryGetDomainForUrl(_urlToProcess.Url, out Domain domain))
+            Domain domain;
+            while (!_web.TryGetDomainForUrl(_urlToProcess.Url, out domain))
             {
-                return;
+                _logger.LogDebug("could not get domain for url to add robots to it");
+                
             }
 
             await _robots.AddRulesToDomain(domain);
