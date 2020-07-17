@@ -26,6 +26,11 @@
 							"domain": "foo",
 							"path": "/red",
 							"title": "red"
+						},
+						{
+							"domain": "foo",
+							"path": "/search?q=what",
+							"title": "search"
 						}
 					]
 				},
@@ -38,6 +43,11 @@
 							"title": "back"
 						}
 					]
+				},
+				{
+					"path": "/search",
+					"links": [],
+					"text": "you searched for {{q}}"
 				}
 			]
 		},

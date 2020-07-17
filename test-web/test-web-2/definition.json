@@ -1,0 +1,20 @@
+{
+	"domains": [
+		{
+			"name": "foo",
+			"robots": "User-agent: *\nDisallow: /stop",
+			"pages": [
+				{
+					"path": "/",
+					"template": "foo_index.html",
+					"contentType": "text/html; charset=UTF-8"
+				},
+				{
+					"path": "/search",
+					"template": "foo_search.html",
+					"contentType": "text/html; charset=UTF-8"
+				}
+			]
+		}
+	]
+}
