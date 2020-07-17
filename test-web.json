@@ -18,6 +18,11 @@
 							"title": "bar/blue"
 						},
 						{
+							"domain": "bar",
+							"path": "/forbidden",
+							"title": "forbidden"
+						},
+						{
 							"domain": "foo",
 							"path": "/red",
 							"title": "red"
@@ -38,7 +43,7 @@
 		},
 		{
 			"name": "bar",
-			"robots": "User-agent: *\nDisallow: /stop",
+			"robots": "User-agent: *\nDisallow: /stop\nDisallow: /forbidden\nCrawl-delay: 2",
 			"pages": [
 				{
 					"path": "/",

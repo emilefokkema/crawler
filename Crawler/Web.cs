@@ -16,9 +16,9 @@ namespace Crawler
             _domains = new ConcurrentDictionary<string, Domain>();
         }
 
-        public bool ContainsLinkTarget(Uri toUrl)
+        public bool ContainsUrl(Uri url)
         {
-            return _links.Any(l => l.To.Equals(toUrl));
+            return _links.Any(l => l.To.Equals(url) || l.From.Equals(url));
         }
 
         public void AddLinks(Uri from, IEnumerable<Uri> to)

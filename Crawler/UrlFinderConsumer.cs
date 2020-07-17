@@ -62,7 +62,7 @@ namespace Crawler
 
         private void AddLinks(List<Uri> urls)
         {
-            List<Uri> urlsToEnqueue = urls.Where(url => !_web.ContainsLinkTarget(url)).ToList();
+            List<Uri> urlsToEnqueue = urls.Where(url => !_web.ContainsUrl(url)).ToList();
             _web.AddLinks(_urlToProcess.Url, urls);
             if (urlsToEnqueue.Count == 0)
             {

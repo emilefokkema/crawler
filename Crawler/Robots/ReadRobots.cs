@@ -69,10 +69,17 @@ namespace Crawler.Robots
             }
 
             string forAllAgents = match.Value;
-            var disallowed = GetUrlMatchers(new Regex(@"Disallow:(.*)").Matches(forAllAgents).Select(m => m.Groups[1].Value)).ToList();
-            var allowed = GetUrlMatchers(new Regex(@"Allow:(.*)").Matches(forAllAgents).Select(m => m.Groups[1].Value)).ToList();
-            _logger.LogDebug($"found robots rule with {disallowed.Count} disallowed and {allowed.Count} allowed");
+            var disallowed = GetUrlMatchers(new Regex(@"Disallow:\s*(\S*)").Matches(forAllAgents).Select(m => m.Groups[1].Value)).ToList();
+            var allowed = GetUrlMatchers(new Regex(@"Allow:\s*(\S*)").Matches(forAllAgents).Select(m => m.Groups[1].Value)).ToList();
+            var crawlDelay = GetCrawlDelay(forAllAgents);
+            _logger.LogDebug($"found robots rule with {disallowed.Count} disallowed and {allowed.Count} allowed {(crawlDelay.HasValue ? $" and crawl delay {crawlDelay.Value}" : "")}");
             return new RobotsRule(allowed, disallowed);
+        }
+
+        private int? GetCrawlDelay(string robots)
+        {
+            var match = new Regex(@"Crawl-delay:\s*(\d+)").Match(robots);
+            return match.Success ? int.Parse(match.Groups[1].Value) : (int?)null;
         }
 
         private static IEnumerable<UrlMatcher> GetUrlMatchers(IEnumerable<string> matchers)

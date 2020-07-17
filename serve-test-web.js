@@ -181,18 +181,28 @@ var os = require('os');
 
 	var hosts = await readFile(hostFilePath, 'utf8');
 
+	var testWeb;
+
+	var loadTestWeb = async function(){
+		console.log(`reading test-web from ${testWebJsonPath}`);
+		testWeb = new TestWeb(JSON.parse(await readFile(testWebJsonPath, 'utf8')));
+	};
+
+	await loadTestWeb();
+
+	fs.watchFile(testWebJsonPath, loadTestWeb);
+
 	var stop = async function(){
 		if(!active){
 			return;
 		}
 		console.log(`stopping`)
 		active = false;
+		fs.unwatchFile(testWebJsonPath, loadTestWeb);
 		if(await writeToHostsFile(hosts)){
 			console.log(`restored previous hosts file`);
 		}
 	}
-
-	var testWeb = new TestWeb(JSON.parse(await readFile(testWebJsonPath, 'utf8')));
 
 	var newFullHostNames = testWeb.domains.map(function(d){return d.fullHostName;});
 	var newHosts = hosts + newFullHostNames.map(function(newFullHostName){return `${EOL}${localHostIP}  ${newFullHostName}`}).join('');
@@ -201,10 +211,20 @@ var os = require('os');
 	}
 	console.log(`added host names ${newFullHostNames.join(', ')} to hosts file`);
 	
-	
+	var addZeros = function(number, minLength){
+		var result = number.toString();
+		while(result.length < minLength){
+			result = "0" + result;
+		}
+		return result;
+	};
+
+	var representDate = function(d){
+		return `${addZeros(d.getHours(), 2)}:${addZeros(d.getMinutes(), 2)}:${addZeros(d.getSeconds(), 2)}.${addZeros(d.getMilliseconds(), 3)}`;
+	}
 
 	var server = http.createServer(function (req, res) {
-		console.log(req.url)
+		console.log(`[${representDate(new Date())}] ${req.headers.host}${req.url}`)
 		if(!active){
 			return writeError(res, 'stopped');
 		}
