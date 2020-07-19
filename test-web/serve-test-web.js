@@ -242,19 +242,23 @@ var Template = require('./template');
 	}
 
 	var server = http.createServer(function (req, res) {
-		req = new RequestWrapper(req);
-		console.log(`[${representDate(new Date())}] ${req}`);
-		if(!active){
-			return writeError(res, 'stopped');
+		try{
+			req = new RequestWrapper(req);
+			console.log(`[${representDate(new Date())}] ${req}`);
+			if(!active){
+				return writeError(res, 'stopped');
+			}
+			if(req.path === stopPath){
+				stop();
+				res.write('stopped');
+				res.end();
+				server.close();
+				return;
+			}
+			testWeb.handle(req, res);
+		}catch(e){
+			writeError(res, e.stack);
 		}
-		if(req.path === stopPath){
-			stop();
-			res.write('stopped');
-			res.end();
-			server.close();
-			return;
-		}
-		testWeb.handle(req, res);
 	});
 	server.listen(8080);
 	var testWebAddress = testWeb.getAddress();

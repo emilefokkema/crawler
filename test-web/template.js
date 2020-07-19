@@ -1,49 +1,75 @@
-var replaceBlocks = function(input, openBlockPattern, closeBlockPattern, replaceBlockFn, replaceOutsideFn){
-	var openBlockRegex = new RegExp(`^${openBlockPattern}$`);
-	var openOrCloseRegex = new RegExp(`(?:${openBlockPattern}|${closeBlockPattern})`, "g");
-	var currentLevel = 0;
-	var result = '';
-	var lastEndBlockIndex = -1;
-	var lastStartBlockIndex = -1;
-	var lastBlockOpenEndIndex = -1;
-	var lastOpen;
-	var match;
-	var originalBlock;
-	while((match = openOrCloseRegex.exec(input)) != null){
-		//console.log(`match at index ${match.index}`)
-		if(openBlockRegex.test(match[0])){
-			if(currentLevel === 0){
-				//console.log(`opening. lastEndBlockIndex = ${lastEndBlockIndex}`)
-				result += replaceOutsideFn(input.substring(lastEndBlockIndex + 1, match.index));
-				lastStartBlockIndex = match.index;
-				lastBlockOpenEndIndex = match.index + match[0].length - 1;
-			}
-			currentLevel++;
-		}else{
-			currentLevel--;
-			if(currentLevel === 0){
-				lastEndBlockIndex = match.index + match[0].length - 1;
-				//console.log(`closing. lastEndBlockIndex is now ${lastEndBlockIndex}`)
-				lastOpen = input.substring(lastStartBlockIndex, lastBlockOpenEndIndex + 1);
-				originalBlock = input.substring(lastBlockOpenEndIndex + 1, match.index);
-				result += replaceBlockFn(lastOpen, originalBlock, match[0]);
-			}
-		}
-		if(currentLevel < 0){
-			throw new Error('unmatched openings and closings');
-		}
-	}
-	if(currentLevel !== 0){
-		throw new Error('unmatched openings and closings');
-	}
-	if(lastEndBlockIndex < input.length - 1){
-		//console.log(`last part. lastEndBlockIndex = ${lastEndBlockIndex}`)
-		var substring = replaceOutsideFn(input.substring(lastEndBlockIndex + 1));
-		//console.log(`substring: ${substring}`)
-		result += substring;
-	}
-	return result;
+var BlockMatcher = require('./block-matcher');
+
+var createDummyValue = function(){
+	var f = function(){return f;};
+	return f;
 };
+
+var getUnboundNames = function(expression){
+	var result = [];
+	var dummyValues = [];
+	var foundAll = false;
+	var counter = 0;
+	do{
+		try{
+			Function.apply(null, result.concat([expression])).apply(null, dummyValues);
+			foundAll = true;
+		}catch(e){
+			var match = e.message.match(/(^\S+) is not defined/);
+			if(!match){
+				throw new Error(`expression ${expression} throws error: ${e.message}`);
+			}
+			result.push(match[1]);
+			dummyValues.push(createDummyValue());
+		}finally{
+			counter++;
+		}
+	}while(!foundAll && counter < 100)
+	return result;
+}
+
+class IfTemplateExpression{
+	constructor(ifExpression, templateText){
+		this.ifExpressionText = ifExpression;
+		this.templateText = templateText;
+		this.thenTemplate = undefined;
+		this.ifExpression = undefined;
+	}
+	compile(){
+		this.thenTemplate = new Template(this.templateText).compile();
+		this.ifExpression = new TemplateExpression(this.ifExpressionText).compile();
+	}
+	execute(values){
+		var ifValue = this.ifExpression.execute(values);
+		return ifValue ? this.thenTemplate.execute(values) : '';
+	}
+}
+
+class RepeatTemplateExpression{
+	constructor(iterableExpression, templateText){
+		this.iterableExpressionText = iterableExpression;
+		this.templateText = templateText;
+		this.repeatingTemplate = undefined;
+		this.iterableExpression = undefined;
+	}
+	compile(){
+		this.repeatingTemplate = new Template(this.templateText).compile();
+		this.iterableExpression = new TemplateExpression(this.iterableExpressionText).compile();
+	}
+	execute(values){
+		var result = '';
+		var iterableValue = this.iterableExpression.execute(values);
+		var index = 0;
+		for(var item of iterableValue){
+			var templateValues = {};
+			Object.assign(templateValues, values);
+			templateValues.value = item;
+			templateValues.index = index++;
+			result += this.repeatingTemplate.execute(templateValues);
+		}
+		return result;
+	}
+}
 
 class TemplateExpression{
 	constructor(text){
@@ -52,69 +78,14 @@ class TemplateExpression{
 		this.executeFn = undefined;
 		this.subTemplates = [];
 	}
-	createDummyValue(){
-		var f = function(){return f;};
-		return f;
-	}
 	compile(){
-		var executeFnArgumentNames = ['map'];
-		var executeFnDummyValues = [function(){}];
-		this.namesToBind = [];
-		var foundAll = false;
-		var counter = 0;
-		do{
-			try{
-				var executeFn = Function.apply(null, executeFnArgumentNames.concat([`return ${this.text}`]));
-				executeFn.apply(null, executeFnDummyValues);
-				foundAll = true;
-			}catch(e){
-				var match = e.message.match(/(^\S+) is not defined/);
-				if(!match){
-					throw new Error(`expression ${this.text} throws error: ${e.message}`);
-				}
-				executeFnArgumentNames.push(match[1]);
-				this.namesToBind.push(match[1]);
-				executeFnDummyValues.push(this.createDummyValue());
-			}finally{
-				counter++;
-			}
-		}while(!foundAll && counter < 100)
-		this.executeFn = executeFn;
-		this.compileSubTemplates();
+		this.namesToBind = getUnboundNames(this.text);
+		this.executeFn = Function.apply(null, this.namesToBind.concat([`return ${this.text}`]));
 		return this;
 	}
-	compileSubTemplates(){
-		var self = this;
-		var mapProxy = function(value, templateString){
-			if(typeof templateString !== 'string'){
-				throw new Error(`the second argument to 'map' has to be a compile-time string`);
-			}
-			var compiled = new Template(templateString).compile();
-			self.subTemplates.push(compiled);
-		}
-		var values = [mapProxy].concat(this.namesToBind.map(this.createDummyValue.bind(this)));
-		this.executeFn.apply(null, values);
-	}
-	executeMap(value, templateString, globalValues){
-		var result = '';
-		var template = this.subTemplates.find(function(t){return t.text === templateString});
-		var index = 0;
-		for(var item of value){
-			var templateValues = {};
-			Object.assign(templateValues, globalValues);
-			templateValues.value = item;
-			templateValues.index = index++;
-			result += template.execute(templateValues);
-		}
-		return result;
-	}
 	execute(values){
-		var self = this;
 		var valueArray = values ? this.namesToBind.map(function(n){return values[n];}) : [];
-		var mapFn = function(value, templateString){
-			return self.executeMap(value, templateString, values);
-		};
-		return this.executeFn.apply(null, [mapFn].concat(valueArray));
+		return this.executeFn.apply(null, valueArray);
 	}
 }
 
@@ -125,31 +96,35 @@ class Template{
 		this.executeFn = undefined;
 	}
 	compile(){
-		var expressionTexts = [];
+		var self = this;
+		var matcher = new BlockMatcher(`(?:(?:repeat|if)\\((?:[^\\{]|\\{[^\\{])*\\))?\\{\\{`, `\\}\\}`);
+		this.compiledExpressions = [];
 		var expressionCounter = 0;
 		var arrayName = 'expressionValues';
-		var text = replaceBlocks(
+		var text = matcher.replace(
 			this.text,
-			`\\{\\{`,
-			`\\}\\}`,
 			function(open, block, close){
-				expressionTexts.push(block);
+				var expression;
+				var openMatch = open.match(/^(?:repeat\((.*)\))?(?:if\((.*)\))?\{\{/);
+				if(openMatch[1]){
+					expression = new RepeatTemplateExpression(openMatch[1], block);
+				}else if(openMatch[2]){
+					expression = new IfTemplateExpression(openMatch[2], block);
+				}else{
+					expression = new TemplateExpression(block);
+				}
+				try{
+					expression.compile();
+					self.compiledExpressions.push(expression);
+				}catch(e){
+					throw new Error(`Could not compile template: ${e.message}`);
+				}
 				return `\${${arrayName}[${expressionCounter++}]}`
 			},
 			function(outside){
 				return outside.replace(/[`\\]/g, "\\$&");
 			}
 		);
-		this.compiledExpressions = [];
-		for(var i = 0; i < expressionTexts.length; i++){
-			var expression = new TemplateExpression(expressionTexts[i]);
-			try{
-				expression.compile();
-				this.compiledExpressions.push(expression);
-			}catch(e){
-				throw new Error(`Could not compile template: ${e.message}`);
-			}
-		}
 		this.executeFn = new Function(arrayName, `return \`${text}\`;`);
 		return this;
 	}
@@ -159,17 +134,15 @@ class Template{
 	}
 }
 
-console.assert(replaceBlocks("0()(4(6))9", "\\(", "\\)", function(open, block, close){return '[]';}, function(outside){return outside;}) === "0[][]9");
-console.assert(replaceBlocks("(0(4(6))9)", "\\(", "\\)", function(open, block, close){return '[]';}, function(outside){return outside;}) === "[]");
-console.assert(replaceBlocks("0(4(6))9", "\\(", "\\)", function(open, block, close){return '[]';}, function(outside){return outside;}) === "0[]9");
-console.assert(replaceBlocks("1(0(4(6))9)", "\\(", "\\)", function(open, block, close){return '[]';}, function(outside){return outside;}) === "1[]");
-console.assert(replaceBlocks("(0(4(6))9)1", "\\(", "\\)", function(open, block, close){return '[]';}, function(outside){return outside;}) === "[]1");
-
 console.assert(new TemplateExpression("x").compile().execute({x: 4}) === 4);
 
 console.assert(new Template(`{{x}} !== {{x + 1}}`).compile().execute({x : 2}) === '2 !== 3');
-console.assert(new Template(`the {{things.length}} things are {{map(things, '{{JSON.stringify(value)}} at index {{index}}, ')}}`).compile().execute({things: [1, "a", {b: 9}]}) === "the 3 things are 1 at index 0, \"a\" at index 1, {\"b\":9} at index 2, ");
-console.assert(new Template(`<ul>{{map(items, '<li>{{f(value)}}</li>')}}</ul>`).compile().execute({items: ["a", "b", "c"], f: function(text){return `${text}!`}}) === '<ul><li>a!</li><li>b!</li><li>c!</li></ul>');
+console.assert(new Template(`the {{things.length}} things are repeat(things){{{{JSON.stringify(value)}} at index {{index}}, }}`).compile().execute({things: [1, "a", {b: 9}]}) === "the 3 things are 1 at index 0, \"a\" at index 1, {\"b\":9} at index 2, ");
+console.assert(new Template(`<ul>repeat(items){{<li>{{f(value)}}</li>}}</ul>`).compile().execute({items: ["a", "b", "c"], f: function(text){return `${text}!`}}) === '<ul><li>a!</li><li>b!</li><li>c!</li></ul>');
+
+console.assert(new Template(`repeat(numbers){{if(value % 2 === 0){{{{value}} is even }}}}`).compile().execute({numbers: [1, 2, 3, 4, 5, 6]}) === '2 is even 4 is even 6 is even ');
+
+console.assert(new Template(`if((function(){return 1;})()){{<}}`).compile().execute() === '<');
 
 module.exports = Template;
 
