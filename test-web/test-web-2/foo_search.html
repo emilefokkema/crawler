@@ -10,7 +10,7 @@
 		if((function(q, s){return !!q && (!s || Number(s) < Number(q));})(q, s)){{
 			<h4>Not quite there yet.</h4>
 			<ul>
-				repeat([2, 3, 5]){{
+				for(value of [2, 3, 5]){{
 					if((!s && (value <= Number(q))) || (!!s && (Number(s) * value <= Number(q)))){{
 						<li>
 							<a href="{{url('foo', `/search?q=${q}&s=${(s ? value * s : value)}`)}}">Look here</a>
