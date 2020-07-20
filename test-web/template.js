@@ -29,8 +29,9 @@ var getUnboundNames = function(expression){
 }
 
 class IfTemplateExpression{
-	constructor(ifExpression, templateText){
-		this.ifExpressionText = ifExpression;
+	constructor(ifCall, templateText){
+		var ifCallMatch = ifCall.match(/^if\((.*)\)$/);
+		this.ifExpressionText = ifCallMatch[1];
 		this.templateText = templateText;
 		this.thenTemplate = undefined;
 		this.ifExpression = undefined;
@@ -45,9 +46,12 @@ class IfTemplateExpression{
 	}
 }
 
-class RepeatTemplateExpression{
-	constructor(iterableExpression, templateText){
-		this.iterableExpressionText = iterableExpression;
+class ForTemplateExpression{
+	constructor(repeatCall, templateText){
+		var repeatCallMatch = repeatCall.match(/^for\(\s*([^,\s]+)(?:\s*,\s*(\S+))?\s*of(.*)\)$/);
+		this.iterableExpressionText = repeatCallMatch[3];
+		this.itemName = repeatCallMatch[1];
+		this.indexName = repeatCallMatch[2];
 		this.templateText = templateText;
 		this.repeatingTemplate = undefined;
 		this.iterableExpression = undefined;
@@ -63,8 +67,10 @@ class RepeatTemplateExpression{
 		for(var item of iterableValue){
 			var templateValues = {};
 			Object.assign(templateValues, values);
-			templateValues.value = item;
-			templateValues.index = index++;
+			templateValues[this.itemName] = item;
+			if(this.indexName){
+				templateValues[this.indexName] = index++;
+			}
 			result += this.repeatingTemplate.execute(templateValues);
 		}
 		return result;
@@ -97,7 +103,7 @@ class Template{
 	}
 	compile(){
 		var self = this;
-		var matcher = new BlockMatcher(`(?:(?:repeat|if)\\((?:[^\\{]|\\{[^\\{])*\\))?\\{\\{`, `\\}\\}`);
+		var matcher = new BlockMatcher(/(?:(?:for|if)\((?:[^{]|\{[^{])*\))?\{\{/.source, /\}\}/.source);
 		this.compiledExpressions = [];
 		var expressionCounter = 0;
 		var arrayName = 'expressionValues';
@@ -105,9 +111,9 @@ class Template{
 			this.text,
 			function(open, block, close){
 				var expression;
-				var openMatch = open.match(/^(?:repeat\((.*)\))?(?:if\((.*)\))?\{\{/);
+				var openMatch = open.match(/^(for\(.*\))?(if\(.*\))?\{\{/);
 				if(openMatch[1]){
-					expression = new RepeatTemplateExpression(openMatch[1], block);
+					expression = new ForTemplateExpression(openMatch[1], block);
 				}else if(openMatch[2]){
 					expression = new IfTemplateExpression(openMatch[2], block);
 				}else{
@@ -137,12 +143,14 @@ class Template{
 console.assert(new TemplateExpression("x").compile().execute({x: 4}) === 4);
 
 console.assert(new Template(`{{x}} !== {{x + 1}}`).compile().execute({x : 2}) === '2 !== 3');
-console.assert(new Template(`the {{things.length}} things are repeat(things){{{{JSON.stringify(value)}} at index {{index}}, }}`).compile().execute({things: [1, "a", {b: 9}]}) === "the 3 things are 1 at index 0, \"a\" at index 1, {\"b\":9} at index 2, ");
-console.assert(new Template(`<ul>repeat(items){{<li>{{f(value)}}</li>}}</ul>`).compile().execute({items: ["a", "b", "c"], f: function(text){return `${text}!`}}) === '<ul><li>a!</li><li>b!</li><li>c!</li></ul>');
+console.assert(new Template(`the {{things.length}} things are for(thing, index of things){{{{JSON.stringify(thing)}} at index {{index}}, }}`).compile().execute({things: [1, "a", {b: 9}]}) === "the 3 things are 1 at index 0, \"a\" at index 1, {\"b\":9} at index 2, ");
+console.assert(new Template(`<ul>for(item of items){{<li>{{f(item)}}</li>}}</ul>`).compile().execute({items: ["a", "b", "c"], f: function(text){return `${text}!`}}) === '<ul><li>a!</li><li>b!</li><li>c!</li></ul>');
 
-console.assert(new Template(`repeat(numbers){{if(value % 2 === 0){{{{value}} is even }}}}`).compile().execute({numbers: [1, 2, 3, 4, 5, 6]}) === '2 is even 4 is even 6 is even ');
+console.assert(new Template(`for(number of numbers){{if(number % 2 === 0){{{{number}} is even }}}}`).compile().execute({numbers: [1, 2, 3, 4, 5, 6]}) === '2 is even 4 is even 6 is even ');
 
 console.assert(new Template(`if((function(){return 1;})()){{<}}`).compile().execute() === '<');
+
+console.assert(new Template(`dat zijn for(number, index of numbers){{{{number}} (at index {{index}}), }}`).compile().execute({numbers: [1, 2, 3, 4]}) === 'dat zijn 1 (at index 0), 2 (at index 1), 3 (at index 2), 4 (at index 3), ');
 
 module.exports = Template;
 
