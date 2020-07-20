@@ -5,6 +5,7 @@ var url = require('url');
 var path = require('path');
 var querystring = require('querystring');
 var Template = require('./template');
+var fsp = require('./fs-promise-wrapper');
 
 (async function(){
 	var active = true;
@@ -30,25 +31,6 @@ var Template = require('./template');
 		res.write('the requested resource was not found');
 		res.end();
 	};
-
-	var promisify = function(f){
-		return function(){
-			var resolve, reject;
-			var promise = new Promise(function(res, rej){resolve = res; reject = rej;});
-			var args = Array.prototype.slice.apply(arguments);
-			f.apply(null, args.concat([function(err, data){
-				if(err){
-					reject(err)
-				}else{
-					resolve(data);
-				}
-			}]));
-			return promise;
-		};
-	};
-
-	var readFile = promisify(fs.readFile.bind(fs));
-	var writeFile = promisify(fs.writeFile.bind(fs));
 
 	class RequestWrapper{
 		constructor(req){
@@ -103,7 +85,7 @@ var Template = require('./template');
 			this.contentType = definition.contentType;
 		}
 		async compile(){
-			var templateText = await readFile(`${jsonDir}/${this.templatePath}`, 'utf8');
+			var templateText = await fsp.readFile(`${jsonDir}/${this.templatePath}`, 'utf8');
 			this.template = new Template(templateText).compile();
 		}
 		getAddress(domain){
@@ -188,7 +170,7 @@ var Template = require('./template');
 
 	var writeToHostsFile = async function(data){
 		try{
-			await writeFile(hostFilePath, data, 'utf8');
+			await fsp.writeFile(hostFilePath, data, 'utf8');
 			return true;
 		}catch(e){
 			console.error(`could not write to hosts file. Are you running this script as administrator?`);
@@ -196,13 +178,13 @@ var Template = require('./template');
 		}
 	};
 
-	var hosts = await readFile(hostFilePath, 'utf8');
+	var hosts = await fsp.readFile(hostFilePath, 'utf8');
 
 	var testWeb;
 
 	var loadTestWeb = async function(){
 		console.log(`reading test-web from ${testWebJsonPath}`);
-		testWeb = new TestWeb(JSON.parse(await readFile(testWebJsonPath, 'utf8')));
+		testWeb = new TestWeb(JSON.parse(await fsp.readFile(testWebJsonPath, 'utf8')));
 		await testWeb.compile();
 	};
 

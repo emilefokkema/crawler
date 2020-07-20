@@ -1,0 +1,41 @@
+Template
+	= parts:(TemplatePart)+
+
+TemplatePart
+	= IfExpression / SimpleExpression / TemplateTextPart
+
+TemplateTextPart
+	= t:TemplateText {return {text: t}}
+
+IfExpression
+	= ifPart:If template:EnclosedTemplate {return {ifPart: ifPart, template: template}}
+    
+EnclosedTemplate
+	= OpenBlock template:Template CloseBlock {return template;}
+
+SimpleExpression
+	= OpenBlock expression:TemplateText CloseBlock {return {expression: expression}}
+
+TemplateText
+	= (!Control .)+ {return text();}
+
+Control
+	= If / OpenBlock / CloseBlock
+
+CloseBlock
+	= "}}"
+
+OpenBlock
+	= "{{"
+
+If = 
+	"if" parens:Parens {return parens;}
+
+Parens
+	= "(" inside:InsideParens ")" {return inside;}
+
+InsideParens = 
+	(Parens / WithoutParens)+ {return text();}
+
+WithoutParens
+	=	(!("(" / ")").)+

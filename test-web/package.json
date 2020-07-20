@@ -1,0 +1,14 @@
+{
+  "name": "test-web",
+  "version": "1.0.0",
+  "description": "locally run a web for the crawler to crawl",
+  "main": "block-matcher.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pegjs": "^0.10.0"
+  }
+}
