@@ -1,17 +1,12 @@
 var fsp = require('./fs-promise-wrapper');
 var peg = require("pegjs");
+var getUnboundNames = require('./get-unbound-names');
 
 var parser = undefined;
-var whenTestsHaveRun;
 
 var createParser = async function(){
 	var definition = await fsp.readFile('./parser-definition.peg', 'utf8');
 	return peg.generate(definition);
-};
-
-var createDummyValue = function(){
-	var f = function(){return f;};
-	return f;
 };
 
 class TemplateExpression{
@@ -63,25 +58,7 @@ class SimpleExpressionDefinition{
 		this.expression = expression;
 	}
 	toTemplateExpression(){
-		var namesToBind = [];
-		var dummyValues = [];
-		var foundAll = false;
-		var counter = 0;
-		do{
-			try{
-				Function.apply(null, namesToBind.concat([this.expression])).apply(null, dummyValues);
-				foundAll = true;
-			}catch(e){
-				var match = e.message.match(/(^\S+) is not defined/);
-				if(!match){
-					throw new Error(`expression ${expression} throws error: ${e.message}`);
-				}
-				namesToBind.push(match[1]);
-				dummyValues.push(createDummyValue());
-			}finally{
-				counter++;
-			}
-		}while(!foundAll && counter < 100)
+		var namesToBind = getUnboundNames(this.expression);
 		return new TemplateExpression(this.expression, namesToBind);
 	}
 	getTemplatePart(){
