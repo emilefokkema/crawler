@@ -255,7 +255,7 @@ paket-files/
 *.sln.iml
 
 *.orig
-package-lock.json
+#package-lock.json
 src/Web.SSO.Prot/Client/src/built
 **/css/helloid/themes/**/*.css
 **/css/helloid/modules/**/*.css

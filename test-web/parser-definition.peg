@@ -5,16 +5,16 @@ TemplatePart
 	= IfExpression / SimpleExpression / TemplateTextPart
 
 TemplateTextPart
-	= t:TemplateText {return {text: t}}
+	= t:TemplateText {return {type: "text", text: t}}
 
 IfExpression
-	= ifPart:If template:EnclosedTemplate {return {ifPart: ifPart, template: template}}
+	= predicate:If template:EnclosedTemplate {return {type: "if", predicate: predicate, template: template}}
     
 EnclosedTemplate
 	= OpenBlock template:Template CloseBlock {return template;}
 
 SimpleExpression
-	= OpenBlock expression:TemplateText CloseBlock {return {expression: expression}}
+	= OpenBlock expression:TemplateText CloseBlock {return {type: "simple", expression: expression}}
 
 TemplateText
 	= (!Control .)+ {return text();}
