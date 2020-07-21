@@ -10,7 +10,8 @@ var testCases = [
 			},
 			{
 				data: {a: false, b: true},
-				expectedResult: ""
+				expectedResult: "",
+				ignored: true
 			}
 		]
 	},
@@ -42,6 +43,11 @@ var testCases = [
 	}
 ];
 
+var getCasesToRun = function(cases){
+	var oneIsFocussed = cases.findIndex(function(c){return c.focussed;}) > -1;
+	return cases.filter(function(c){return !c.ignored && (!oneIsFocussed || c.focussed);});
+};
+
 var compareDataToResult = function(template, data, expectedResult, fail){
 	var actualResult = template.execute(data);
 	if(actualResult !== expectedResult){
@@ -49,11 +55,15 @@ var compareDataToResult = function(template, data, expectedResult, fail){
 	}
 };
 
-var runTest = async function(testCase, fail){
+var runTest = async function(testCase, fail, ignore){
 	try{
 		var template = await compileTemplate(testCase.template);
-		for(var i = 0; i < testCase.cases.length; i++){
-			compareDataToResult(template, testCase.cases[i].data, testCase.cases[i].expectedResult, fail);
+		var casesToRun = getCasesToRun(testCase.cases);
+		if(casesToRun.length < testCase.cases.length){
+			ignore();
+		}
+		for(var i = 0; i < casesToRun.length; i++){
+			compareDataToResult(template, casesToRun[i].data, casesToRun[i].expectedResult, fail);
 		}
 	}catch(e){
 		fail(e.stack);
@@ -69,14 +79,25 @@ var runTests = async function(){
 		result.success = false;
 		result.msg = msg;
 	}
-	await Promise.all(testCases.map(function(c){return runTest(c, fail);}));
+	var ignore = function(){
+		result.someIgnored = true;
+	};
+	var casesToRun = getCasesToRun(testCases);
+	if(casesToRun.length < testCases.length){
+		ignore();
+	}
+	await Promise.all(casesToRun.map(function(c){return runTest(c, fail, ignore);}));
 	return result;
 };
 
 (async function(){
 	var result = await runTests();
 	if(result.success){
-		console.log(`all pass.`)
+		if(result.someIgnored){
+			console.log(`all pass, but some were ignored`)
+		}else{
+			console.log(`all pass.`)
+		}
 	}else{
 		console.log(result.msg);
 	}
