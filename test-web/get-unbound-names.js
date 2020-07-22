@@ -26,66 +26,78 @@ class NodeContext{
 	withChild(){
 		return new NodeContext(this.scope);
 	}
+	withVariableDeclaration(node){
+		return new VariableDeclarationNodeContext(this.scope, node.kind);
+	}
 	withStatement(node){
 		if(node.type === "FunctionDeclaration"){
 			this.scope.addName(node.id.name);
-			return this.withFunctionExpression(node);
+			return this.withFunction(node);
+		}
+		if(node.type === "VariableDeclaration"){
+			return this.withVariableDeclaration(node);
 		}
 		return this.withChild();
 	}
-	withFunctionExpression(node){
-		return new FunctionNodeContext(this.scope.addScope(), node);
+	withVariableDeclarator(node){
+		return this.withChild();
+	}
+	withFunction(node){
+		return new FunctionNodeContext(this.scope, node);
 	}
 	withExpression(node){
 		if(node.type === "FunctionExpression"){
-			return this.withFunctionExpression(node);
+			return this.withFunction(node);
 		}
 		return this.withChild();
 	}
+}
+
+class VariableDeclarationNodeContext extends NodeContext{
+	constructor(scope, kind){
+		super(scope);
+		console.log(`created variable declaration context of kind ${kind}`);
+	}
+
 }
 
 class FunctionNodeContext extends NodeContext{
 	constructor(scope, functionNode){
 		super(scope);
-		var params = functionNode.params;
-		for(var i = 0; i < params.length; i++){
-			this.scope.addName(params[i].name);
-		}
-	}
-}
-
-class TopNodeContext extends NodeContext{
-	constructor(scope, expression){
-		super(scope);
-		this.hasExpression = false;
-		this.expression = expression;
-	}
-	throwError(){
-		throw new Error(`${JSON.stringify(this.expression)} is not a single expression`);
+		this.functionNode = functionNode;
 	}
 	withStatement(node){
-		if(node.type !== "ExpressionStatement"){
-			this.throwError();
+		if(node.type !== "BlockStatement"){
+			throw new Error(`did not expect node of type ${this.functionNode.type} to have direct child of type ${node.type}`)
 		}
-		if(this.hasExpression){
-			this.throwError();
+		var newScope = this.scope.addScope();
+		var params = this.functionNode.params;
+		for(var i = 0; i < params.length; i++){
+			newScope.addName(params[i].name);
 		}
-		this.hasExpression = true;
-		return super.withStatement(node);
+		return new NodeContext(newScope);
 	}
 }
 
 var getUnboundNames = function(expression){
 	var tree = acorn.parse(expression);
+	if(tree.body.length !== 1 || tree.body[0].type !== "ExpressionStatement"){
+		throw new Error(`${JSON.stringify(expression)} is not a single expression`);
+	}
+	var expressionTree = tree.body[0];
 	var topScope = new Scope();
-	var topNodeContext = new TopNodeContext(topScope, expression);
-	walk.recursive(tree, topNodeContext, {
+	var topNodeContext = new NodeContext(topScope);
+	walk.recursive(expressionTree, topNodeContext, {
 		Statement: function(node, context, c){
 			c(node, context.withStatement(node));
 		},
 		Expression: function(node, context, c){
 			c(node, context.withExpression(node));
-		}
+		},
+		// VariableDeclarator: function(node, context, c){
+		// 	console.log(`encountered variable declarator: `, node)
+		// 	//c(node, context.withVariableDeclarator(node));
+		// }
 	});
 };
 
@@ -102,8 +114,8 @@ var unboundNamesForExpressionAre = function(expression, expected){
 	return true;
 };
 
-//getUnboundNames(" (function(y){let x;})");
-getUnboundNames(" (function(y){function b(a){}})");
+getUnboundNames(" (function(y){let x;})");
+//getUnboundNames(" (function(y){function b(a){}})");
 //getUnboundNames("x + y");
 //getUnboundNames("let x; y");
 //getUnboundNames("let x");
