@@ -1,29 +1,92 @@
-var createDummyValue = function(){
-	var f = function(){return f;};
-	return f;
-};
+var acorn = require('acorn');
+var walk = require('acorn-walk')
+
+var scopeId = 0;
+var nodeContextId = 0;
+
+class Scope{
+	constructor(){
+		this.scopeId = scopeId++;
+		this.scopes = [];
+	}
+	addName(name){
+		console.log(`adding name ${JSON.stringify(name)} to scope ${this.scopeId}`);
+	}
+	addScope(){
+		var newScope = new Scope();
+		return newScope;
+	}
+}
+
+class NodeContext{
+	constructor(scope){
+		this.scope = scope;
+		this.nodeContextId = nodeContextId++;
+	}
+	withChild(){
+		return new NodeContext(this.scope);
+	}
+	withStatement(node){
+		if(node.type === "FunctionDeclaration"){
+			this.scope.addName(node.id.name);
+			return this.withFunctionExpression(node);
+		}
+		return this.withChild();
+	}
+	withFunctionExpression(node){
+		return new FunctionNodeContext(this.scope.addScope(), node);
+	}
+	withExpression(node){
+		if(node.type === "FunctionExpression"){
+			return this.withFunctionExpression(node);
+		}
+		return this.withChild();
+	}
+}
+
+class FunctionNodeContext extends NodeContext{
+	constructor(scope, functionNode){
+		super(scope);
+		var params = functionNode.params;
+		for(var i = 0; i < params.length; i++){
+			this.scope.addName(params[i].name);
+		}
+	}
+}
+
+class TopNodeContext extends NodeContext{
+	constructor(scope, expression){
+		super(scope);
+		this.hasExpression = false;
+		this.expression = expression;
+	}
+	throwError(){
+		throw new Error(`${JSON.stringify(this.expression)} is not a single expression`);
+	}
+	withStatement(node){
+		if(node.type !== "ExpressionStatement"){
+			this.throwError();
+		}
+		if(this.hasExpression){
+			this.throwError();
+		}
+		this.hasExpression = true;
+		return super.withStatement(node);
+	}
+}
 
 var getUnboundNames = function(expression){
-	var result = [];
-	var dummyValues = [];
-	var foundAll = false;
-	var counter = 0;
-	do{
-		try{
-			Function.apply(null, result.concat([expression])).apply(null, dummyValues);
-			foundAll = true;
-		}catch(e){
-			var match = e.message.match(/(^\S+) is not defined/);
-			if(!match){
-				throw new Error(`expression ${expression} throws error: ${e.message}`);
-			}
-			result.push(match[1]);
-			dummyValues.push(createDummyValue());
-		}finally{
-			counter++;
+	var tree = acorn.parse(expression);
+	var topScope = new Scope();
+	var topNodeContext = new TopNodeContext(topScope, expression);
+	walk.recursive(tree, topNodeContext, {
+		Statement: function(node, context, c){
+			c(node, context.withStatement(node));
+		},
+		Expression: function(node, context, c){
+			c(node, context.withExpression(node));
 		}
-	}while(!foundAll && counter < 100)
-	return result;
+	});
 };
 
 var unboundNamesForExpressionAre = function(expression, expected){
@@ -39,9 +102,15 @@ var unboundNamesForExpressionAre = function(expression, expected){
 	return true;
 };
 
-console.assert(unboundNamesForExpressionAre("x", ["x"]));
-console.assert(unboundNamesForExpressionAre("x + y", ["x", "y"]));
-console.assert(unboundNamesForExpressionAre("x && y", ["x", "y"]));
-console.assert(unboundNamesForExpressionAre("x || y", ["x", "y"]));
+//getUnboundNames(" (function(y){let x;})");
+getUnboundNames(" (function(y){function b(a){}})");
+//getUnboundNames("x + y");
+//getUnboundNames("let x; y");
+//getUnboundNames("let x");
+
+//console.assert(unboundNamesForExpressionAre("x", ["x"]));
+//console.assert(unboundNamesForExpressionAre("x + y", ["x", "y"]));
+//console.assert(unboundNamesForExpressionAre("x && y", ["x", "y"]));
+//console.assert(unboundNamesForExpressionAre("x || y", ["x", "y"]));
 
 module.exports = getUnboundNames;
