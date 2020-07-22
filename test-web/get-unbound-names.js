@@ -34,9 +34,6 @@ class NodeContext{
 			this.scope.addName(node.id.name);
 			return this.withFunction(node);
 		}
-		if(node.type === "VariableDeclaration"){
-			return this.withVariableDeclaration(node);
-		}
 		return this.withChild();
 	}
 	withVariableDeclarator(node){
@@ -58,7 +55,10 @@ class VariableDeclarationNodeContext extends NodeContext{
 		super(scope);
 		console.log(`created variable declaration context of kind ${kind}`);
 	}
-
+	withVariableDeclarator(node){
+		console.log(`adding declarator to declaration: `, node);
+		return super.withVariableDeclarator();
+	}
 }
 
 class FunctionNodeContext extends NodeContext{
@@ -89,15 +89,18 @@ var getUnboundNames = function(expression){
 	var topNodeContext = new NodeContext(topScope);
 	walk.recursive(expressionTree, topNodeContext, {
 		Statement: function(node, context, c){
+			if(node.type === "VariableDeclaration"){
+				var declarationContext = context.withVariableDeclaration(node);
+				for(var i = 0; i < node.declarations.length; i++){
+					c(node.declarations[i], declarationContext.withVariableDeclarator(node.declarations[i]));
+				}
+				return;
+			}
 			c(node, context.withStatement(node));
 		},
 		Expression: function(node, context, c){
 			c(node, context.withExpression(node));
-		},
-		// VariableDeclarator: function(node, context, c){
-		// 	console.log(`encountered variable declarator: `, node)
-		// 	//c(node, context.withVariableDeclarator(node));
-		// }
+		}
 	});
 };
 
