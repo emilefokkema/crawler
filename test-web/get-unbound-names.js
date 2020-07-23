@@ -2,80 +2,59 @@ var acorn = require('acorn');
 var walk = require('acorn-walk')
 
 var scopeId = 0;
-var nodeContextId = 0;
+var contextId = 0;
 
-class Scope{
-	constructor(){
-		this.scopeId = scopeId++;
-		this.scopes = [];
+
+class Context{
+	constructor(parentContext){
+		this.parentContext = parentContext;
+		this.contextId = contextId++;
 	}
-	addName(name){
-		console.log(`adding name ${JSON.stringify(name)} to scope ${this.scopeId}`);
+	addFunctionDeclaration(functionDeclarationNode){
+		console.log(`context ${this.contextId} adding function declaration called: ${functionDeclarationNode.id.name}`);
 	}
-	addScope(){
-		var newScope = new Scope();
-		return newScope;
+	addFunctionParameterDeclaration(pattern){
+		console.log(`context ${this.contextId} adding function parameter declaration: `, pattern);
+	}
+	addVariableDeclaration(variableDeclaratorNode, variableDeclarationNode){
+		console.log(`context ${this.contextId} adding ${JSON.stringify(variableDeclarationNode.kind)} declaration `, variableDeclaratorNode)
+	}
+	FunctionExpression(node){
+		return new FunctionContext(node, this);
+	}
+	FunctionDeclaration(node){
+		this.addFunctionDeclaration(node);
+		return new FunctionContext(node, this);
+	}
+	VariableDeclaration(node){
+		return new VariableDeclarationContext(node, this);
 	}
 }
 
-class NodeContext{
-	constructor(scope){
-		this.scope = scope;
-		this.nodeContextId = nodeContextId++;
+class VariableDeclarationContext {
+	constructor(variableDeclarationNode, parentContext){
+		//console.log(`creating variable declaration context of kind ${variableDeclarationNode.kind}`);
+		this.variableDeclarationNode = variableDeclarationNode;
+		this.parentContext = parentContext;
 	}
-	withChild(){
-		return new NodeContext(this.scope);
-	}
-	withVariableDeclaration(node){
-		return new VariableDeclarationNodeContext(this.scope, node.kind);
-	}
-	withStatement(node){
-		if(node.type === "FunctionDeclaration"){
-			this.scope.addName(node.id.name);
-			return this.withFunction(node);
-		}
-		return this.withChild();
-	}
-	withVariableDeclarator(node){
-		return this.withChild();
-	}
-	withFunction(node){
-		return new FunctionNodeContext(this.scope, node);
-	}
-	withExpression(node){
-		if(node.type === "FunctionExpression"){
-			return this.withFunction(node);
-		}
-		return this.withChild();
+	VariableDeclarator(node){
+		this.parentContext.addVariableDeclaration(node, this.variableDeclarationNode);
 	}
 }
 
-class VariableDeclarationNodeContext extends NodeContext{
-	constructor(scope, kind){
-		super(scope);
-		console.log(`created variable declaration context of kind ${kind}`);
-	}
-	withVariableDeclarator(node){
-		console.log(`adding declarator to declaration: `, node);
-		return super.withVariableDeclarator();
-	}
-}
-
-class FunctionNodeContext extends NodeContext{
-	constructor(scope, functionNode){
-		super(scope);
+class FunctionContext {
+	constructor(functionNode, parentContext){
+		//console.log(`creating function context for `, functionNode);
 		this.functionNode = functionNode;
+		this.parentContext = parentContext;
 	}
-	withStatement(node){
-		if(node.type !== "BlockStatement"){
-			throw new Error(`did not expect node of type ${this.functionNode.type} to have direct child of type ${node.type}`)
+	BlockStatement(node){
+		//console.log(`opening block statement. params are`, this.functionNode.params);
+		var newContext = new Context(this);
+		for(var i = 0; i < this.functionNode.params.length; i++){
+			newContext.addFunctionParameterDeclaration(this.functionNode.params[i]);
 		}
-		var newScope = this.scope.addScope();
-		var params = this.functionNode.params;
-		for(var i = 0; i < params.length; i++){
-			newScope.addName(params[i].name);
-		}
-		return new NodeContext(newScope);
+		return newContext;
 	}
 }
 
@@ -85,23 +64,18 @@ var getUnboundNames = function(expression){
 		throw new Error(`${JSON.stringify(expression)} is not a single expression`);
 	}
 	var expressionTree = tree.body[0];
-	var topScope = new Scope();
-	var topNodeContext = new NodeContext(topScope);
-	walk.recursive(expressionTree, topNodeContext, {
-		Statement: function(node, context, c){
-			if(node.type === "VariableDeclaration"){
-				var declarationContext = context.withVariableDeclaration(node);
-				for(var i = 0; i < node.declarations.length; i++){
-					c(node.declarations[i], declarationContext.withVariableDeclarator(node.declarations[i]));
-				}
-				return;
-			}
-			c(node, context.withStatement(node));
-		},
-		Expression: function(node, context, c){
-			c(node, context.withExpression(node));
-		}
-	});
+	var topNodeContext = new Context();
+	var visitor = {};
+	for(var type in walk.base){
+		visitor[type] = (function(baseFn, type){
+			return function(node, context, c){
+				//console.log(`visitor for ${type} encountered node of type ${node.type}`);
+				var newContext = (context && context[type]) ? context[type](node) : context;
+				baseFn(node, newContext, c);
+			};
+		})(walk.base[type], type);
+	}
+	walk.recursive(expressionTree, topNodeContext, visitor);
 };
 
 var unboundNamesForExpressionAre = function(expression, expected){
