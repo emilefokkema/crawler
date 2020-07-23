@@ -13,14 +13,11 @@ class Context{
 	addFunctionDeclaration(functionDeclarationNode){
 		console.log(`context ${this.contextId} adding function declaration called: ${functionDeclarationNode.id.name}`);
 	}
-	addFunctionParameterDeclaration(pattern){
-		console.log(`context ${this.contextId} adding function parameter declaration: `, pattern);
+	addFunctionParameterDeclaration(patternNode){
+		console.log(`context ${this.contextId} adding function parameter declaration: `, patternNode);
 	}
 	addVariableDeclaration(variableDeclaratorNode, variableDeclarationNode){
 		console.log(`context ${this.contextId} adding ${JSON.stringify(variableDeclarationNode.kind)} declaration `, variableDeclaratorNode)
-	}
-	FunctionExpression(node){
-		return new FunctionContext(node, this);
 	}
 	FunctionDeclaration(node){
 		this.addFunctionDeclaration(node);
@@ -28,6 +25,25 @@ class Context{
 	}
 	VariableDeclaration(node){
 		return new VariableDeclarationContext(node, this);
+	}
+	Expression(node){
+		//console.log(`context ${this.contextId} encountered expression `, node);
+		if(node.type === "FunctionExpression"){
+			//console.log(`context ${this.contextId} encountered function expression `, node);
+			return new FunctionContext(node, this);
+		}
+		if(node.type === "MemberExpression"){
+			console.log(`context ${this.contextId} encountered member expression `, node);
+			return new MemberExpressionContext(node, this);
+		}
+		if(node.type === "ObjectExpression"){
+			console.log(`context ${this.contextId} encountered object expression `, node);
+			return new ObjectExpressionContext(node, this);
+		}
+		if(node.type === "Identifier"){
+			console.log(`context ${this.contextId} encountered identifier `, node);
+		}
+		return this;
 	}
 }
 
@@ -39,6 +55,20 @@ class VariableDeclarationContext {
 	}
 	VariableDeclarator(node){
 		this.parentContext.addVariableDeclaration(node, this.variableDeclarationNode);
+	}
+}
+
+class MemberExpressionContext{
+	constructor(memberExpressionNode, parentContext){
+		this.memberExpressionNode = memberExpressionNode;
+		this.parentContext = parentContext;
+	}
+}
+
+class ObjectExpressionContext{
+	constructor(objectExpressionNode, parentContext){
+		this.objectExpressionNode = objectExpressionNode;
+		this.parentContext = parentContext;
 	}
 }
 
@@ -69,7 +99,7 @@ var getUnboundNames = function(expression){
 	for(var type in walk.base){
 		visitor[type] = (function(baseFn, type){
 			return function(node, context, c){
-				//console.log(`visitor for ${type} encountered node of type ${node.type}`);
+				//console.log(`visitor for ${type} encountered node of type ${node.type} in context `, context);
 				var newContext = (context && context[type]) ? context[type](node) : context;
 				baseFn(node, newContext, c);
 			};
@@ -91,7 +121,10 @@ var unboundNamesForExpressionAre = function(expression, expected){
 	return true;
 };
 
-getUnboundNames(" (function(y){let x;})");
+getUnboundNames(" (function(y){let x; ({a: b})})");
+//getUnboundNames(" (function(y){let x; x.y})");
+//getUnboundNames(" (function(y){let x; x + y})");
+//getUnboundNames(" (function(y){let x;})");
 //getUnboundNames(" (function(y){function b(a){}})");
 //getUnboundNames("x + y");
 //getUnboundNames("let x; y");
