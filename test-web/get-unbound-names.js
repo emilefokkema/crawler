@@ -33,11 +33,11 @@ class Context{
 			return new FunctionContext(node, this);
 		}
 		if(node.type === "MemberExpression"){
-			console.log(`context ${this.contextId} encountered member expression `, node);
+			//console.log(`context ${this.contextId} encountered member expression `, node);
 			return new MemberExpressionContext(node, this);
 		}
 		if(node.type === "ObjectExpression"){
-			console.log(`context ${this.contextId} encountered object expression `, node);
+			//console.log(`context ${this.contextId} encountered object expression `, node);
 			return new ObjectExpressionContext(node, this);
 		}
 		if(node.type === "Identifier"){
@@ -63,12 +63,22 @@ class MemberExpressionContext{
 		this.memberExpressionNode = memberExpressionNode;
 		this.parentContext = parentContext;
 	}
+	Expression(node){
+		if(node === this.memberExpressionNode.property && !this.memberExpressionNode.computed){
+			console.log(`member expression uses property `, node);
+			return;
+		}
+		return this.parentContext.Expression(node);
+	}
 }
 
 class ObjectExpressionContext{
 	constructor(objectExpressionNode, parentContext){
 		this.objectExpressionNode = objectExpressionNode;
 		this.parentContext = parentContext;
+	}
+	Property(node){
+		console.log(`object expression context encountered property `, node)
 	}
 }
 
@@ -122,7 +132,7 @@ var unboundNamesForExpressionAre = function(expression, expected){
 };
 
 getUnboundNames(" (function(y){let x; ({a: b})})");
-//getUnboundNames(" (function(y){let x; x.y})");
+//getUnboundNames(" (function(y){let x; x.y.z})");
 //getUnboundNames(" (function(y){let x; x + y})");
 //getUnboundNames(" (function(y){let x;})");
 //getUnboundNames(" (function(y){function b(a){}})");
