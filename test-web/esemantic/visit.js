@@ -1,7 +1,14 @@
+var distinct = function(arr){
+	return arr.filter(function(x, i){return arr.indexOf(x) === i;});
+}
+var mapMany = function(arr, mapFn){
+	return arr.map(mapFn).reduce(function(a, b){return a.concat(b);}, []);
+}
+
 class Interface{
-	constructor(name, getChildren, parentInterfaces){
+	constructor(name, getChildrenFn, parentInterfaces){
 		this.name = name;
-		this.getChildren = getChildren;
+		this.getChildrenFn = getChildrenFn;
 		this.parentInterfaces = parentInterfaces;
 		this.childInterfaces = [];
 	}
@@ -11,11 +18,23 @@ class Interface{
 	isAssignableFromNode(n){
 		return true;
 	}
+	getSelfAndParents(){
+		var result = [this];
+		var parentsParents = mapMany(this.parentInterfaces, function(p){return p.getSelfAndParents();});//this.parentInterfaces.map(function(p){return p.getSelfAndParents();}).reduce(function(a, b){return a.concat(b);}, []);
+		result = result.concat(parentsParents);
+		result = distinct(result);
+		return result;
+	}
 	isMoreSpecificThan(t){
 		if(t.hasChild(this)){
 			return true;
 		}
 		return false;
+	}
+	getChildren(n){
+		var selfAndParents = this.getSelfAndParents();
+
+		return distinct(mapMany(selfAndParents, function(t){return t.getChildrenFn(n);}));
 	}
 	hasChild(t){
 		for(var child of this.childInterfaces){
@@ -68,10 +87,10 @@ class InterfaceCollection{
 	addInterface(name, getChildren, parentInterfaces){
 		this.add(parentInterfaces, function(p){return new Interface(name, getChildren, p);});
 	}
-	addNodeType(typeName, name, getChildren, parentInterfaces){
+	addNodeType(name, typeName, getChildren, parentInterfaces){
 		this.add(parentInterfaces, function(p){return new NodeType(typeName, name, getChildren, p);});
 	}
-	addNodeSubtype(typeName, test, name, getChildren, parentInterfaces){
+	addNodeSubtype(name, typeName, test, getChildren, parentInterfaces){
 		this.add(parentInterfaces, function(p){return new NodeSubtype(typeName, test, name, getChildren, p);});
 	}
 	getNodeType(node){
@@ -92,10 +111,10 @@ class InterfaceCollection{
 		var nodeType = this.getNodeType(node);
 		var eligibleTypes = [nodeType];
 		var counter = 0;
-		while(counter < 5){
+		while(counter < 10){
 			var eligibleMethod;
 			var eligibleMethodName;
-			console.log(`looking at types ${eligibleTypes.map(function(t){return t.name}).join(', ')}`);
+			//console.log(`looking at types ${eligibleTypes.map(function(t){return t.name}).join(', ')}`);
 			for(var type of eligibleTypes){
 				var visitorMethod = visitor[type.name];
 				if(visitorMethod && eligibleMethod){
@@ -107,18 +126,25 @@ class InterfaceCollection{
 				}
 			}
 			if(eligibleMethod){
-				console.log(`found method by name '${eligibleMethodName}'`);
+				//console.log(`found method by name '${eligibleMethodName}'`);
 				return eligibleMethod;
 			}
-			eligibleTypes = eligibleTypes.map(function(t){return t.parentInterfaces;}).reduce(function(a, b){return a.concat(b);}, []);
-			eligibleTypes = eligibleTypes.filter(function(t, i){return eligibleTypes.indexOf(t) === i;});
+			eligibleTypes = mapMany(eligibleTypes, function(t){return t.parentInterfaces;}); //eligibleTypes.map(function(t){return t.parentInterfaces;}).reduce(function(a, b){return a.concat(b);}, []);
+			eligibleTypes = distinct(eligibleTypes);//eligibleTypes.filter(function(t, i){return eligibleTypes.indexOf(t) === i;});
+			if(eligibleTypes.length === 0){
+				//console.log(`found no visitor method`)
+				return undefined;
+			}
 			counter++;
 		}
 	}
 	getNewVisitor(node, visitor){
-		console.log(`going to get new visitor for node `, node)
-		this.findVisitorMethod(node, visitor);
-		
+		var visitorMethod = this.findVisitorMethod(node, visitor);
+		if(!visitorMethod){
+			console.log(`found no suitable method for node of type ${node.type}, using the same visitor`);
+			return visitor;
+		}
+		return visitorMethod.apply(visitor, [node]);
 	}
 }
 
@@ -132,8 +158,10 @@ collection.addNodeType("Program", "Program", function(n){return n.body;}, ["Node
 collection.addInterface("Statement", noChildren, ["Node"]);
 collection.addInterface("Function", function(n){return n.params.concat([n.body]).concat(n.id ? [n.id] : [])}, ["Node"]);
 collection.addNodeType("ExpressionStatement", "ExpressionStatement", function(n){return [n.expression];}, ["Statement"]);
-collection.addNodeSubtype("ExpressionStatement", function(n){return n.directive !== undefined;}, "Directive", noChildren, ["ExpressionStatement"]);
-
+collection.addNodeSubtype("Directive", "ExpressionStatement", function(n){return n.directive !== undefined;}, noChildren, ["ExpressionStatement"]);
+collection.addNodeType("FunctionExpression", "FunctionExpression", noChildren, ["Function", "Expression"]);
+collection.addNodeType("Literal", "Literal", noChildren, ["Expression"]);
+collection.addNodeType("BlockStatement", "BlockStatement", function(n){return n.body;}, ["Statement"]);
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor){
