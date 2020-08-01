@@ -78,7 +78,17 @@ class ObjectExpressionContext{
 		this.parentContext = parentContext;
 	}
 	Property(node){
-		console.log(`object expression context encountered property `, node)
+		return new ObjectExpressionPropertyContext(node, this.parentContext);
+	}
+}
+
+class ObjectExpressionPropertyContext{
+	constructor(propertyNode, parentContext){
+		this.propertyNode = propertyNode;
+		this.parentContext = parentContext;
+	}
+	Expression(node){
+		return this.parentContext.Expression(node);
 	}
 }
 
@@ -131,11 +141,11 @@ var unboundNamesForExpressionAre = function(expression, expected){
 	return true;
 };
 
-getUnboundNames(" (function(y){let x; ({a: b})})");
+//getUnboundNames(" (function(y){let x; ({a: b})})");
 //getUnboundNames(" (function(y){let x; x.y.z})");
 //getUnboundNames(" (function(y){let x; x + y})");
 //getUnboundNames(" (function(y){let x;})");
-//getUnboundNames(" (function(y){function b(a){}})");
+getUnboundNames(" (function(y){function b(a){}})");
 //getUnboundNames("x + y");
 //getUnboundNames("let x; y");
 //getUnboundNames("let x");
