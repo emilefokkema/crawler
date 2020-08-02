@@ -49,6 +49,34 @@ var cases = [
 			{
 				methods: [
 					{
+						methodName: "Expression",
+						expectedNodeTypes: []
+					},
+					{
+						methodName: "Literal",
+						expectedNodeTypes: ["Literal"]
+					},
+					{
+						methodName: "Statement",
+						expectedNodeTypes: ["ExpressionStatement"]
+					}
+				]
+			},
+			{
+				methods: [
+					{
+						methodName: "Expression",
+						expectedNodeTypes: ["Literal"]
+					},
+					{
+						methodName: "Statement",
+						expectedNodeTypes: ["ExpressionStatement"]
+					}
+				]
+			},
+			{
+				methods: [
+					{
 						methodName: "Node",
 						expectedNodeTypes: ["Literal"]
 					},
