@@ -71,7 +71,11 @@ class InterfaceCollection{
 		this.interfaces = [];
 	}
 	getInterfaces(names){
-		return this.interfaces.filter(function(i){return names.includes(i.name);});
+		var result = this.interfaces.filter(function(i){return names.includes(i.name);});
+		if(result.length !== names.length){
+			throw new Error(`not all interfaces ${JSON.stringify(names)} are known yet`);
+		}
+		return result;
 	}
 	addChildToParents(child, parents){
 		for(var parent of parents){
@@ -118,7 +122,7 @@ class InterfaceCollection{
 			for(var type of eligibleTypes){
 				var visitorMethod = visitor[type.name];
 				if(visitorMethod && eligibleMethod){
-					throw new Error(`cannot decide between methods '${eligibleMethodName}' and '${type.name}'`)
+					throw new Error(`For node of type ${node.type}, cannot decide between methods '${eligibleMethodName}' and '${type.name}'`)
 				}
 				if(visitorMethod){
 					eligibleMethod = visitorMethod;
@@ -141,7 +145,6 @@ class InterfaceCollection{
 	getNewVisitor(node, visitor){
 		var visitorMethod = this.findVisitorMethod(node, visitor);
 		if(!visitorMethod){
-			console.log(`found no suitable method for node of type ${node.type}, using the same visitor`);
 			return visitor;
 		}
 		return visitorMethod.apply(visitor, [node]);
@@ -162,6 +165,9 @@ collection.addNodeSubtype("Directive", "ExpressionStatement", function(n){return
 collection.addNodeType("FunctionExpression", "FunctionExpression", noChildren, ["Function", "Expression"]);
 collection.addNodeType("Literal", "Literal", noChildren, ["Expression"]);
 collection.addNodeType("BlockStatement", "BlockStatement", function(n){return n.body;}, ["Statement"]);
+collection.addInterface("Pattern", noChildren, ["Node"]);
+collection.addNodeType("Identifier", "Identifier", noChildren, ["Expression", "Pattern"]);
+collection.addNodeSubtype("RegExpLiteral", "Literal", function(n){return n.regex !== undefined;}, noChildren, ["Literal"]);
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor){

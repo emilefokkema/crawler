@@ -164,6 +164,56 @@ var cases = [
 					}
 				]
 			},
+			{
+				methods: [
+					{
+						methodName: "Function",
+						expectedNodeTypes: []
+					},
+					{
+						methodName: "Expression",
+						expectedNodeTypes: []
+					}
+				],
+				expectException: true
+			},
+		]
+	},
+	{
+		script: '/a/;',
+		tree: {
+		 "type": "Program",
+		 "start": 0,
+		 "end": 3,
+		 "body": [
+		  {
+		   "type": "ExpressionStatement",
+		   "start": 0,
+		   "end": 3,
+		   "expression": {
+		    "type": "Literal",
+		    "start": 0,
+		    "end": 3,
+		    "value": {},
+		    "raw": "/a/",
+		    "regex": {
+		     "pattern": "a",
+		     "flags": ""
+		    }
+		   }
+		  }
+		 ],
+		 "sourceType": "script"
+		},
+		visitorCases: [
+			{
+				methods: [
+					{
+						methodName: "RegExpLiteral",
+						expectedNodeTypes: ["Literal"]
+					},
+				]
+			}
 		]
 	}
 ];
@@ -219,28 +269,39 @@ var createTestVisitor = function(visitorCase){
 	};
 };
 
+var runVisitorCase = function(testCase, index, visitorCase){
+	var visitor = createTestVisitor(visitorCase);
+	var encounteredException = false;
+	try{
+		visit(testCase.tree, visitor.visitor);
+		visitor.verify();
+	}catch(e){
+		if(visitorCase.expectException){
+			encounteredException = true;
+		}else{
+			throw new Error(`visitor case at index ${index} for tree representing script ${JSON.stringify(testCase.script)} failed. ` + e.message)
+		}
+	}	
+	if(visitorCase.expectException && !encounteredException){
+		throw new Error(`visitor case at index ${index} for tree representing script ${JSON.stringify(testCase.script)} failed. Expected exception to be thrown.`)
+	}
+};
 
 var runCase = function(testCase){
 	for(var i = 0; i < testCase.visitorCases.length; i++){
 		var visitorCase = testCase.visitorCases[i];
-		var visitor = createTestVisitor(visitorCase);
-		try{
-			visit(testCase.tree, visitor.visitor);
-			visitor.verify();
-		}catch(e){
-			throw new Error(`visitor case at index ${i} for tree representing script ${JSON.stringify(testCase.script)} failed. ` + e.message)
-		}	
+		runVisitorCase(testCase, i, visitorCase);
 	}
 };
 
 for(var testCase of cases){
 	runCase(testCase);
 }
-//var tree = acorn.parse('\'use strict\';');
+//var tree = acorn.parse('/a/');
 
 
 // var tree = acorn.parse('(function(){})');
-// console.log(JSON.stringify(tree, undefined, 1))
+//console.log(JSON.stringify(tree, undefined, 1))
 //var tree = acorn.parse('var x = 1+1;');
 
 // var visitor = {
