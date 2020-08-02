@@ -97,7 +97,7 @@ class InterfaceCollection{
 	addNodeSubtype(name, typeName, test, getChildren, parentInterfaces){
 		this.add(parentInterfaces, function(p){return new NodeSubtype(typeName, test, name, getChildren, p);});
 	}
-	getNodeType(node){
+	getNodeType(node, parentNode){
 		var types = this.interfaces.filter(function(i){return i.isAssignableFromNode(node);});
 		if(!types.length){
 			throw new Error(`${JSON.stringify(node.type)} is not a known type`)
@@ -108,11 +108,11 @@ class InterfaceCollection{
 		}
 		return mostSpecific[0];
 	}
-	getChildren(node){
-		return this.getNodeType(node).getChildren(node);
+	getChildren(node, parentNode){
+		return this.getNodeType(node, parentNode).getChildren(node);
 	}
-	findVisitorMethod(node, visitor){
-		var nodeType = this.getNodeType(node);
+	findVisitorMethod(node, visitor, parentNode){
+		var nodeType = this.getNodeType(node, parentNode);
 		var eligibleTypes = [nodeType];
 		var counter = 0;
 		while(counter < 10){
@@ -142,8 +142,8 @@ class InterfaceCollection{
 			counter++;
 		}
 	}
-	getNewVisitor(node, visitor){
-		var visitorMethod = this.findVisitorMethod(node, visitor);
+	getNewVisitor(node, visitor, parentNode){
+		var visitorMethod = this.findVisitorMethod(node, visitor, parentNode);
 		if(!visitorMethod){
 			return visitor;
 		}
@@ -170,14 +170,14 @@ collection.addNodeType("Identifier", "Identifier", noChildren, ["Expression", "P
 collection.addNodeSubtype("RegExpLiteral", "Literal", function(n){return n.regex !== undefined;}, noChildren, ["Literal"]);
 
 var visit = function(node, visitor){
-	(function continuation(node, visitor){
-		var children = collection.getChildren(node);
+	(function continuation(node, visitor, parentNode){
+		var children = collection.getChildren(node, parentNode);
 		for(var child of children){
-			var newVisitor = collection.getNewVisitor(child, visitor);
+			var newVisitor = collection.getNewVisitor(child, visitor, node);
 			if(!newVisitor){
 				return false;
 			}
-			if(!continuation(child, newVisitor)){
+			if(!continuation(child, newVisitor, node)){
 				return false;
 			}
 		}
