@@ -34,7 +34,10 @@ class Interface{
 	getChildren(n){
 		var selfAndParents = this.getSelfAndParents();
 
-		return distinct(mapMany(selfAndParents, function(t){return t.getChildrenFn(n);}));
+		return distinct(mapMany(selfAndParents, function(t){return t.getChildrenFn(n.node);}));
+	}
+	descendsFrom(typeName){
+		return this.getSelfAndParents().findIndex(function(t){return t.name === typeName;});
 	}
 	hasChild(t){
 		for(var child of this.childInterfaces){
@@ -97,7 +100,7 @@ class InterfaceCollection{
 	addNodeSubtype(name, typeName, test, getChildren, parentInterfaces){
 		this.add(parentInterfaces, function(p){return new NodeSubtype(typeName, test, name, getChildren, p);});
 	}
-	getNodeType(node, parentNode){
+	getNodeType(node){
 		var types = this.interfaces.filter(function(i){return i.isAssignableFromNode(node);});
 		if(!types.length){
 			throw new Error(`${JSON.stringify(node.type)} is not a known type`)
@@ -108,11 +111,11 @@ class InterfaceCollection{
 		}
 		return mostSpecific[0];
 	}
-	getChildren(node, parentNode){
-		return this.getNodeType(node, parentNode).getChildren(node);
+	getChildren(node){
+		return this.getNodeType(node).getChildren(node);
 	}
-	findVisitorMethod(node, visitor, parentNode){
-		var nodeType = this.getNodeType(node, parentNode);
+	findVisitorMethod(node, visitor){
+		var nodeType = this.getNodeType(node);
 		var eligibleTypes = [nodeType];
 		var counter = 0;
 		while(counter < 10){
@@ -142,8 +145,8 @@ class InterfaceCollection{
 			counter++;
 		}
 	}
-	getNewVisitor(node, visitor, parentNode){
-		var visitorMethod = this.findVisitorMethod(node, visitor, parentNode);
+	getNewVisitor(node, visitor){
+		var visitorMethod = this.findVisitorMethod(node, visitor);
 		if(!visitorMethod){
 			return visitor;
 		}
@@ -153,6 +156,23 @@ class InterfaceCollection{
 
 var collection = new InterfaceCollection();
 
+class NodeWrapper{
+	constructor(node, parent){
+		this.node = node;
+		this.parent = parent;
+	}
+	get type(){return this.node.type;}
+	hasParentOfType(typeName){
+		if(!this.parent){
+			return false;
+		}
+		var parentType = collection.getNodeType(this.parent);
+		return parentType.descendsFrom(typeName);
+	}
+}
+
+
+
 var noChildren = function(){return [];};
 
 collection.addInterface("Node", noChildren, []);
@@ -161,28 +181,30 @@ collection.addNodeType("Program", "Program", function(n){return n.body;}, ["Node
 collection.addInterface("Statement", noChildren, ["Node"]);
 collection.addInterface("Function", function(n){return n.params.concat([n.body]).concat(n.id ? [n.id] : [])}, ["Node"]);
 collection.addNodeType("ExpressionStatement", "ExpressionStatement", function(n){return [n.expression];}, ["Statement"]);
-collection.addNodeSubtype("Directive", "ExpressionStatement", function(n){return n.directive !== undefined;}, noChildren, ["ExpressionStatement"]);
+collection.addNodeSubtype("Directive", "ExpressionStatement", function(n){return n.node.directive !== undefined;}, noChildren, ["ExpressionStatement"]);
 collection.addNodeType("FunctionExpression", "FunctionExpression", noChildren, ["Function", "Expression"]);
 collection.addNodeType("Literal", "Literal", noChildren, ["Expression"]);
 collection.addNodeType("BlockStatement", "BlockStatement", function(n){return n.body;}, ["Statement"]);
 collection.addInterface("Pattern", noChildren, ["Node"]);
 collection.addNodeType("Identifier", "Identifier", noChildren, ["Expression", "Pattern"]);
-collection.addNodeSubtype("RegExpLiteral", "Literal", function(n){return n.regex !== undefined;}, noChildren, ["Literal"]);
+collection.addNodeSubtype("RegExpLiteral", "Literal", function(n){return n.node.regex !== undefined;}, noChildren, ["Literal"]);
+collection.addNodeSubtype("FunctionBody", "BlockStatement", function(n){return n.hasParentOfType("Function");}, noChildren, ["BlockStatement"])
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor, parentNode){
-		var children = collection.getChildren(node, parentNode);
+		var children = collection.getChildren(node);
 		for(var child of children){
-			var newVisitor = collection.getNewVisitor(child, visitor, node);
+			var childWrapped = new NodeWrapper(child, node);
+			var newVisitor = collection.getNewVisitor(childWrapped, visitor);
 			if(!newVisitor){
 				return false;
 			}
-			if(!continuation(child, newVisitor, node)){
+			if(!continuation(childWrapped, newVisitor)){
 				return false;
 			}
 		}
 		return true;
-	})(node, visitor);
+	})(new NodeWrapper(node), visitor);
 };
 
 module.exports = visit;

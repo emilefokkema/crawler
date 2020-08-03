@@ -167,6 +167,46 @@ var cases = [
 			{
 				methods: [
 					{
+						methodName: "Node",
+						expectedNodeTypes: ["ExpressionStatement", "FunctionExpression"]
+					},
+					{
+						methodName: "BlockStatement",
+						expectedNodeTypes: ["BlockStatement"]
+					}
+				]
+			},
+			{
+				methods: [
+					{
+						methodName: "Node",
+						expectedNodeTypes: ["ExpressionStatement", "FunctionExpression"]
+					},
+					{
+						methodName: "FunctionBody",
+						expectedNodeTypes: ["BlockStatement"]
+					}
+				]
+			},
+			{
+				methods: [
+					{
+						methodName: "Node",
+						expectedNodeTypes: ["ExpressionStatement", "FunctionExpression"]
+					},
+					{
+						methodName: "BlockStatement",
+						expectedNodeTypes: []
+					},
+					{
+						methodName: "FunctionBody",
+						expectedNodeTypes: ["BlockStatement"]
+					}
+				]
+			},
+			{
+				methods: [
+					{
 						methodName: "Function",
 						expectedNodeTypes: []
 					},
@@ -279,7 +319,7 @@ var runVisitorCase = function(testCase, index, visitorCase){
 		if(visitorCase.expectException){
 			encounteredException = true;
 		}else{
-			throw new Error(`visitor case at index ${index} for tree representing script ${JSON.stringify(testCase.script)} failed. ` + e.message)
+			throw new Error(`visitor case at index ${index} for tree representing script ${JSON.stringify(testCase.script)} failed. ` + e.stack)
 		}
 	}	
 	if(visitorCase.expectException && !encounteredException){
