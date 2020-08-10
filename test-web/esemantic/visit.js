@@ -188,7 +188,10 @@ collection.addNodeType("BlockStatement", "BlockStatement", function(n){return n.
 collection.addInterface("Pattern", noChildren, ["Node"]);
 collection.addNodeType("Identifier", "Identifier", noChildren, ["Expression", "Pattern"]);
 collection.addNodeSubtype("RegExpLiteral", "Literal", function(n){return n.node.regex !== undefined;}, noChildren, ["Literal"]);
-collection.addNodeSubtype("FunctionBody", "BlockStatement", function(n){return n.hasParentOfType("Function");}, noChildren, ["BlockStatement"])
+collection.addNodeSubtype("FunctionBody", "BlockStatement", function(n){return n.hasParentOfType("Function");}, noChildren, ["BlockStatement"]);
+collection.addNodeType("EmptyStatement", "EmptyStatement", noChildren, ["Statement"]);
+collection.addNodeType("DebuggerStatement", "DebuggerStatement", noChildren, ["Statement"]);
+collection.addNodeType("WithStatement", "WithStatement", function(n){return [n.object, n.body];}, ["Statement"]);
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor, parentNode){
