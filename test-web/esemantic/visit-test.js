@@ -220,6 +220,94 @@ var cases = [
 		]
 	},
 	{
+		script: '(function a(b, c){})',
+		tree: {
+			 "type": "Program",
+			 "start": 0,
+			 "end": 20,
+			 "body": [
+			  {
+			   "type": "ExpressionStatement",
+			   "start": 0,
+			   "end": 20,
+			   "expression": {
+			    "type": "FunctionExpression",
+			    "start": 1,
+			    "end": 19,
+			    "id": {
+			     "type": "Identifier",
+			     "start": 10,
+			     "end": 11,
+			     "name": "a"
+			    },
+			    "expression": false,
+			    "generator": false,
+			    "async": false,
+			    "params": [
+			     {
+			      "type": "Identifier",
+			      "start": 12,
+			      "end": 13,
+			      "name": "b"
+			     },
+			     {
+			      "type": "Identifier",
+			      "start": 15,
+			      "end": 16,
+			      "name": "c"
+			     }
+			    ],
+			    "body": {
+			     "type": "BlockStatement",
+			     "start": 17,
+			     "end": 19,
+			     "body": []
+			    }
+			   }
+			  }
+			 ],
+			 "sourceType": "script"
+			},
+		visitorCases:[
+			{
+				methods: [
+					{
+						methodName: "Pattern",
+						expectedNodeTypes: ['Identifier', 'Identifier', 'Identifier']
+					}
+				]
+			},
+			{
+				methods: [
+					{
+						methodName: "Identifier",
+						expectedNodeTypes: ['Identifier', 'Identifier', 'Identifier']
+					}
+				]
+			},
+			{
+				methods: [
+					{
+						methodName: "Expression",
+						expectedNodeTypes: ['FunctionExpression', 'Identifier', 'Identifier', 'Identifier']
+					}
+				]
+			},
+			{
+				methods: [
+					{
+						methodName: "Pattern",
+						expectedNodeTypes: []
+					},
+					{
+						methodName: "Identifier",
+						expectedNodeTypes: ['Identifier', 'Identifier', 'Identifier']
+					}
+				]
+			}
+		]
+	},
+	{
 		script: '/a/;',
 		tree: {
 		 "type": "Program",
@@ -337,7 +425,7 @@ var runCase = function(testCase){
 for(var testCase of cases){
 	runCase(testCase);
 }
-//var tree = acorn.parse('/a/');
+//var tree = acorn.parse('(function a(b, c){})');
 
 
 // var tree = acorn.parse('(function(){})');
