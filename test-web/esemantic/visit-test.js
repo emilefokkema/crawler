@@ -343,6 +343,193 @@ var cases = [
 				]
 			}
 		]
+	},
+	{
+		script: 'with(a){b;c;}',
+		tree: {
+			 "type": "Program",
+			 "start": 0,
+			 "end": 13,
+			 "body": [
+			  {
+			   "type": "WithStatement",
+			   "start": 0,
+			   "end": 13,
+			   "object": {
+			    "type": "Identifier",
+			    "start": 5,
+			    "end": 6,
+			    "name": "a"
+			   },
+			   "body": {
+			    "type": "BlockStatement",
+			    "start": 7,
+			    "end": 13,
+			    "body": [
+			     {
+			      "type": "ExpressionStatement",
+			      "start": 8,
+			      "end": 10,
+			      "expression": {
+			       "type": "Identifier",
+			       "start": 8,
+			       "end": 9,
+			       "name": "b"
+			      }
+			     },
+			     {
+			      "type": "ExpressionStatement",
+			      "start": 10,
+			      "end": 12,
+			      "expression": {
+			       "type": "Identifier",
+			       "start": 10,
+			       "end": 11,
+			       "name": "c"
+			      }
+			     }
+			    ]
+			   }
+			  }
+			 ],
+			 "sourceType": "script"
+			},
+		visitorCases: [
+			{
+				methods: [
+					{
+						methodName: "Identifier",
+						expectedNodeTypes: ['Identifier', 'Identifier', 'Identifier']
+					}
+				]
+			}
+		]
+	},
+	{
+		script: '(function a(){a: return 0;})',
+		tree: {
+			 "type": "Program",
+			 "start": 0,
+			 "end": 28,
+			 "body": [
+			  {
+			   "type": "ExpressionStatement",
+			   "start": 0,
+			   "end": 28,
+			   "expression": {
+			    "type": "FunctionExpression",
+			    "start": 1,
+			    "end": 27,
+			    "id": {
+			     "type": "Identifier",
+			     "start": 10,
+			     "end": 11,
+			     "name": "a"
+			    },
+			    "expression": false,
+			    "generator": false,
+			    "async": false,
+			    "params": [],
+			    "body": {
+			     "type": "BlockStatement",
+			     "start": 13,
+			     "end": 27,
+			     "body": [
+			      {
+			       "type": "LabeledStatement",
+			       "start": 14,
+			       "end": 26,
+			       "body": {
+			        "type": "ReturnStatement",
+			        "start": 17,
+			        "end": 26,
+			        "argument": {
+			         "type": "Literal",
+			         "start": 24,
+			         "end": 25,
+			         "value": 0,
+			         "raw": "0"
+			        }
+			       },
+			       "label": {
+			        "type": "Identifier",
+			        "start": 14,
+			        "end": 15,
+			        "name": "a"
+			       }
+			      }
+			     ]
+			    }
+			   }
+			  }
+			 ],
+			 "sourceType": "script"
+			},
+		visitorCases: [
+			{
+				methods: [
+					{
+						methodName: 'Identifier',
+						expectedNodeTypes: ['Identifier', 'Identifier']
+					},
+					{
+						methodName: 'Literal',
+						expectedNodeTypes: ['Literal']
+					}
+				]
+			}
+		]
+	},
+	{
+		script: 'if(a){b;}',
+		tree: {
+			 "type": "Program",
+			 "start": 0,
+			 "end": 9,
+			 "body": [
+			  {
+			   "type": "IfStatement",
+			   "start": 0,
+			   "end": 9,
+			   "test": {
+			    "type": "Identifier",
+			    "start": 3,
+			    "end": 4,
+			    "name": "a"
+			   },
+			   "consequent": {
+			    "type": "BlockStatement",
+			    "start": 5,
+			    "end": 9,
+			    "body": [
+			     {
+			      "type": "ExpressionStatement",
+			      "start": 6,
+			      "end": 8,
+			      "expression": {
+			       "type": "Identifier",
+			       "start": 6,
+			       "end": 7,
+			       "name": "b"
+			      }
+			     }
+			    ]
+			   },
+			   "alternate": null
+			  }
+			 ],
+			 "sourceType": "script"
+			},
+		visitorCases: [
+			{
+				methods: [
+					{
+						methodName: 'Identifier',
+						expectedNodeTypes: ['Identifier', 'Identifier']
+					}
+				]
+			}
+		]
 	}
 ];
 
@@ -425,7 +612,7 @@ var runCase = function(testCase){
 for(var testCase of cases){
 	runCase(testCase);
 }
-//var tree = acorn.parse('(function a(b, c){})');
+//var tree = acorn.parse('if(a){b;}');
 
 
 // var tree = acorn.parse('(function(){})');

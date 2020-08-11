@@ -192,6 +192,11 @@ collection.addNodeSubtype("FunctionBody", "BlockStatement", function(n){return n
 collection.addNodeType("EmptyStatement", "EmptyStatement", noChildren, ["Statement"]);
 collection.addNodeType("DebuggerStatement", "DebuggerStatement", noChildren, ["Statement"]);
 collection.addNodeType("WithStatement", "WithStatement", function(n){return [n.object, n.body];}, ["Statement"]);
+collection.addNodeType("ReturnStatement", "ReturnStatement", function(n){return n.argument ? [n.argument] : [];}, ["Statement"]);
+collection.addNodeType("LabeledStatement", "LabeledStatement", function(n){return [n.label, n.body];}, ["Statement"]);
+collection.addNodeType("BreakStatement", "BreakStatement", function(n){return n.label ? [n.label] : [];}, ["Statement"]);
+collection.addNodeType("ContinueStatement", "ContinueStatement", function(n){return n.label ? [n.label] : [];}, ["Statement"]);
+collection.addNodeType("IfStatement", "IfStatement", function(n){return [n.test, n.consequent].concat(n.alternate ? [n.alternate] : []);}, ["Statement"]);
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor, parentNode){
