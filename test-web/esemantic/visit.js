@@ -88,6 +88,9 @@ class InterfaceCollection{
 	add(parentInterfaces, getNewInterface){
 		parentInterfaces = this.getInterfaces(parentInterfaces);
 		var newInterface = getNewInterface(parentInterfaces);
+		if(this.interfaces.findIndex(function(i){return i.name === newInterface.name;}) > -1){
+			throw new Error(`inteface '${newInterface.name}' is already defined`)
+		}
 		this.addChildToParents(newInterface, parentInterfaces);
 		this.interfaces.push(newInterface);
 	}
@@ -174,12 +177,13 @@ class NodeWrapper{
 
 
 var noChildren = function(){return [];};
+var maybe = function(n){return n ? [n] : [];};
 
 collection.addInterface("Node", noChildren, []);
 collection.addInterface("Expression", noChildren, ["Node"]);
 collection.addNodeType("Program", "Program", function(n){return n.body;}, ["Node"]);
 collection.addInterface("Statement", noChildren, ["Node"]);
-collection.addInterface("Function", function(n){return n.params.concat([n.body]).concat(n.id ? [n.id] : [])}, ["Node"]);
+collection.addInterface("Function", function(n){return n.params.concat([n.body]).concat(maybe(n.id))}, ["Node"]);
 collection.addNodeType("ExpressionStatement", "ExpressionStatement", function(n){return [n.expression];}, ["Statement"]);
 collection.addNodeSubtype("Directive", "ExpressionStatement", function(n){return n.node.directive !== undefined;}, noChildren, ["ExpressionStatement"]);
 collection.addNodeType("FunctionExpression", "FunctionExpression", noChildren, ["Function", "Expression"]);
@@ -192,15 +196,20 @@ collection.addNodeSubtype("FunctionBody", "BlockStatement", function(n){return n
 collection.addNodeType("EmptyStatement", "EmptyStatement", noChildren, ["Statement"]);
 collection.addNodeType("DebuggerStatement", "DebuggerStatement", noChildren, ["Statement"]);
 collection.addNodeType("WithStatement", "WithStatement", function(n){return [n.object, n.body];}, ["Statement"]);
-collection.addNodeType("ReturnStatement", "ReturnStatement", function(n){return n.argument ? [n.argument] : [];}, ["Statement"]);
+collection.addNodeType("ReturnStatement", "ReturnStatement", function(n){return maybe(n.argument);}, ["Statement"]);
 collection.addNodeType("LabeledStatement", "LabeledStatement", function(n){return [n.label, n.body];}, ["Statement"]);
-collection.addNodeType("BreakStatement", "BreakStatement", function(n){return n.label ? [n.label] : [];}, ["Statement"]);
-collection.addNodeType("ContinueStatement", "ContinueStatement", function(n){return n.label ? [n.label] : [];}, ["Statement"]);
-collection.addNodeType("IfStatement", "IfStatement", function(n){return [n.test, n.consequent].concat(n.alternate ? [n.alternate] : []);}, ["Statement"]);
+collection.addNodeType("BreakStatement", "BreakStatement", function(n){return maybe(n.label);}, ["Statement"]);
+collection.addNodeType("ContinueStatement", "ContinueStatement", function(n){return maybe(n.label);}, ["Statement"]);
+collection.addNodeType("IfStatement", "IfStatement", function(n){return [n.test, n.consequent].concat(maybe(n.alternate));}, ["Statement"]);
 collection.addNodeType("SwitchStatement", "SwitchStatement", function(n){return n.cases.concat([n.discriminant]);}, ["Statement"]);
-collection.addNodeType("SwitchCase", "SwitchCase", function(n){return n.consequent.concat(n.test ? [n.test] : []);}, ["Node"]);
-collection.addNodeType("TryStatement", "TryStatement", function(n){return [n.block].concat(n.handler ? [n.handler] : []).concat(n.finalizer ? [n.finalizer] : []);}, ["Statement"]);
-collection.addNodeType("CatchClause", "CatchClause", function(n){return [n.param, n.body];}, ["Node"])
+collection.addNodeType("SwitchCase", "SwitchCase", function(n){return n.consequent.concat(maybe(n.test));}, ["Node"]);
+collection.addNodeType("ThrowStatement", "ThrowStatement", function(n){return [n.argument];}, ["Statement"]);
+collection.addNodeType("TryStatement", "TryStatement", function(n){return [n.block].concat(maybe(n.handler)).concat(maybe(n.finalizer));}, ["Statement"]);
+collection.addNodeType("CatchClause", "CatchClause", function(n){return [n.param, n.body];}, ["Node"]);
+collection.addNodeType("WhileStatement", "WhileStatement", function(n){return [n.test, n.body];}, ["Statement"]);
+collection.addNodeType("DoWhileStatement", "DoWhileStatement", function(n){return [n.test, n.body];}, ["Statement"]);
+collection.addNodeType("ForStatement", "ForStatement", function(n){return [n.body].concat(maybe(n.init)).concat(maybe(n.test)).concat(maybe(n.update));}, ["Statement"]);
+
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor, parentNode){
