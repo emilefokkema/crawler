@@ -1040,5 +1040,201 @@
     ]
    }
   ]
+ },
+ {
+  "script": "for(a in b){c;}",
+  "tree": {
+   "type": "Program",
+   "start": 0,
+   "end": 15,
+   "body": [
+    {
+     "type": "ForInStatement",
+     "start": 0,
+     "end": 15,
+     "left": {
+      "type": "Identifier",
+      "start": 4,
+      "end": 5,
+      "name": "a"
+     },
+     "right": {
+      "type": "Identifier",
+      "start": 9,
+      "end": 10,
+      "name": "b"
+     },
+     "body": {
+      "type": "BlockStatement",
+      "start": 11,
+      "end": 15,
+      "body": [
+       {
+        "type": "ExpressionStatement",
+        "start": 12,
+        "end": 14,
+        "expression": {
+         "type": "Identifier",
+         "start": 12,
+         "end": 13,
+         "name": "c"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "sourceType": "script"
+  },
+  "visitorCases": [
+   {
+    "methods": [
+     {
+      "methodName": "Identifier",
+      "expectedNodeTypes": [
+       "Identifier",
+       "Identifier",
+       "Identifier"
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "script": "function a(b, c){d;}",
+  "tree": {
+   "type": "Program",
+   "start": 0,
+   "end": 20,
+   "body": [
+    {
+     "type": "FunctionDeclaration",
+     "start": 0,
+     "end": 20,
+     "id": {
+      "type": "Identifier",
+      "start": 9,
+      "end": 10,
+      "name": "a"
+     },
+     "expression": false,
+     "generator": false,
+     "async": false,
+     "params": [
+      {
+       "type": "Identifier",
+       "start": 11,
+       "end": 12,
+       "name": "b"
+      },
+      {
+       "type": "Identifier",
+       "start": 14,
+       "end": 15,
+       "name": "c"
+      }
+     ],
+     "body": {
+      "type": "BlockStatement",
+      "start": 16,
+      "end": 20,
+      "body": [
+       {
+        "type": "ExpressionStatement",
+        "start": 17,
+        "end": 19,
+        "expression": {
+         "type": "Identifier",
+         "start": 17,
+         "end": 18,
+         "name": "d"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "sourceType": "script"
+  },
+  "visitorCases": [
+   {
+    "methods": [
+     {
+      "methodName": "Identifier",
+      "expectedNodeTypes": [
+       "Identifier",
+       "Identifier",
+       "Identifier",
+       "Identifier"
+      ]
+     }
+    ]
+   },
+   {
+    "methods": [
+     {
+      "methodName": "Function",
+      "expectedNodeTypes": [
+       "FunctionDeclaration"
+      ]
+     }
+    ]
+   },
+   {
+    "methods": [
+     {
+      "methodName": "Statement",
+      "expectedNodeTypes": [
+        "BlockStatement",
+        "ExpressionStatement"
+      ]
+     },
+     {
+      "methodName": "Function",
+      "expectedNodeTypes": [
+       "FunctionDeclaration"
+      ]
+     }
+    ]
+   },
+   {
+    "methods": [
+     {
+      "methodName": "Declaration",
+      "expectedNodeTypes": [
+       "FunctionDeclaration"
+      ]
+     }
+    ]
+   },
+   {
+    "methods": [
+     {
+      "methodName": "Statement",
+      "expectedNodeTypes": [
+       "FunctionDeclaration",
+       "BlockStatement",
+       "ExpressionStatement"
+      ]
+     }
+    ]
+   },
+   {
+    "methods": [
+     {
+      "methodName": "Function",
+      "expectedNodeTypes": [
+      ]
+     },
+     {
+      "methodName": "Declaration",
+      "expectedNodeTypes": [
+      ]
+     }
+    ],
+    "expectException": true
+   }
+  ]
  }
 ]

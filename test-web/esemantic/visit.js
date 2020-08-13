@@ -209,6 +209,9 @@ collection.addNodeType("CatchClause", "CatchClause", function(n){return [n.param
 collection.addNodeType("WhileStatement", "WhileStatement", function(n){return [n.test, n.body];}, ["Statement"]);
 collection.addNodeType("DoWhileStatement", "DoWhileStatement", function(n){return [n.test, n.body];}, ["Statement"]);
 collection.addNodeType("ForStatement", "ForStatement", function(n){return [n.body].concat(maybe(n.init)).concat(maybe(n.test)).concat(maybe(n.update));}, ["Statement"]);
+collection.addNodeType("ForInStatement", "ForInStatement", function(n){return [n.left, n.right, n.body];}, ["Statement"]);
+collection.addInterface("Declaration", noChildren, ["Statement"]);
+collection.addNodeType("FunctionDeclaration", "FunctionDeclaration", noChildren, ["Function", "Declaration"]);
 
 
 var visit = function(node, visitor){
