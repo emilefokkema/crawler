@@ -197,6 +197,10 @@ collection.addNodeType("LabeledStatement", "LabeledStatement", function(n){retur
 collection.addNodeType("BreakStatement", "BreakStatement", function(n){return n.label ? [n.label] : [];}, ["Statement"]);
 collection.addNodeType("ContinueStatement", "ContinueStatement", function(n){return n.label ? [n.label] : [];}, ["Statement"]);
 collection.addNodeType("IfStatement", "IfStatement", function(n){return [n.test, n.consequent].concat(n.alternate ? [n.alternate] : []);}, ["Statement"]);
+collection.addNodeType("SwitchStatement", "SwitchStatement", function(n){return n.cases.concat([n.discriminant]);}, ["Statement"]);
+collection.addNodeType("SwitchCase", "SwitchCase", function(n){return n.consequent.concat(n.test ? [n.test] : []);}, ["Node"]);
+collection.addNodeType("TryStatement", "TryStatement", function(n){return [n.block].concat(n.handler ? [n.handler] : []).concat(n.finalizer ? [n.finalizer] : []);}, ["Statement"]);
+collection.addNodeType("CatchClause", "CatchClause", function(n){return [n.param, n.body];}, ["Node"])
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor, parentNode){
