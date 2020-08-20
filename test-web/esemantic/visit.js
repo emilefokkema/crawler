@@ -186,7 +186,6 @@ collection.addInterface("Statement", noChildren, ["Node"]);
 collection.addInterface("Function", function(n){return n.params.concat([n.body]).concat(maybe(n.id))}, ["Node"]);
 collection.addNodeType("ExpressionStatement", "ExpressionStatement", function(n){return [n.expression];}, ["Statement"]);
 collection.addNodeSubtype("Directive", "ExpressionStatement", function(n){return n.node.directive !== undefined;}, noChildren, ["ExpressionStatement"]);
-collection.addNodeType("FunctionExpression", "FunctionExpression", noChildren, ["Function", "Expression"]);
 collection.addNodeType("Literal", "Literal", noChildren, ["Expression"]);
 collection.addNodeType("BlockStatement", "BlockStatement", function(n){return n.body;}, ["Statement"]);
 collection.addInterface("Pattern", noChildren, ["Node"]);
@@ -212,7 +211,19 @@ collection.addNodeType("ForStatement", "ForStatement", function(n){return [n.bod
 collection.addNodeType("ForInStatement", "ForInStatement", function(n){return [n.left, n.right, n.body];}, ["Statement"]);
 collection.addInterface("Declaration", noChildren, ["Statement"]);
 collection.addNodeType("FunctionDeclaration", "FunctionDeclaration", noChildren, ["Function", "Declaration"]);
-
+collection.addNodeType("VariableDeclaration", "VariableDeclaration", function(n){return n.declarations;}, ["Declaration"]);
+collection.addNodeType("VariableDeclarator", "VariableDeclarator", function(n){return [n.id].concat(maybe(n.init));}, ["Node"]);
+collection.addNodeType("ThisExpression", "ThisExpression", noChildren, ["Expression"]);
+collection.addNodeType("ArrayExpression", "ArrayExpression", function(n){return n.elements.filter(function(e){return !!e;})}, ["Expression"]);
+collection.addNodeType("ObjectExpression", "ObjectExpression", function(n){return n.properties;}, ["Expression"]);
+collection.addNodeType("Property", "Property", function(n){return [n.key, n.value];}, ["Node"]);
+collection.addNodeType("FunctionExpression", "FunctionExpression", noChildren, ["Function", "Expression"]);
+collection.addNodeType("UnaryExpression", "UnaryExpression", function(n){return [n.argument];}, ["Expression"]);
+collection.addNodeType("UpdateExpression", "UpdateExpression", function(n){return [n.argument];}, ["Expression"]);
+collection.addNodeType("BinaryExpression", "BinaryExpression", function(n){return [n.left, n.right];}, ["Expression"]);
+collection.addNodeType("AssignmentExpression", "AssignmentExpression", function(n){return [n.left, n.right];}, ["Expression"]);
+collection.addNodeType("LogicalExpression", "LogicalExpression", function(n){return [n.left, n.right];}, ["Expression"]);
+collection.addNodeType("MemberExpression", "MemberExpression", function(n){return [n.object, n.property];}, ["Expression", "Pattern"]);
 
 var visit = function(node, visitor){
 	(function continuation(node, visitor, parentNode){

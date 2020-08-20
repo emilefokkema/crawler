@@ -39,4 +39,4 @@ var addCaseForScript = async function(script){
 	});
 };
 
-addCaseForScript('function a(b, c){d;}').catch(function(e){console.log(e.stack);});
+addCaseForScript('a.b;').catch(function(e){console.log(e.stack);});
